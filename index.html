@@ -74,6 +74,16 @@
   .btn-primary{width:100%;padding:14px;background:var(--av-green);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;letter-spacing:0.03em;transition:background .15s;margin-top:6px;display:flex;align-items:center;justify-content:center;gap:8px}
   .btn-primary:active{background:var(--av-green-mid)}
   .btn-secondary{width:100%;padding:12px;background:transparent;color:var(--av-green);border:1.5px solid var(--av-green);border-radius:10px;font-size:14px;cursor:pointer;margin-top:10px;font-family:inherit;font-weight:500}
+  .btn-danger{width:100%;padding:12px;background:transparent;color:#8B2020;border:1.5px solid #8B2020;border-radius:10px;font-size:14px;cursor:pointer;margin-top:8px;font-family:inherit;font-weight:500;display:flex;align-items:center;justify-content:center;gap:6px}
+  .btn-danger:active{background:#FCE8E8}
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;padding:1.5rem}
+  .modal-overlay.show{display:flex}
+  .modal-box{background:#fff;border-radius:14px;padding:1.5rem;max-width:340px;width:100%;text-align:center}
+  .modal-title{font-size:16px;font-weight:600;color:#1A2E1F;margin-bottom:8px}
+  .modal-sub{font-size:13px;color:#5A7A5F;line-height:1.5;margin-bottom:1.25rem}
+  .modal-btns{display:flex;flex-direction:column;gap:8px}
+  .modal-btn-confirmar{width:100%;padding:12px;background:#8B2020;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+  .modal-btn-cancelar{width:100%;padding:12px;background:transparent;color:#1E4A2E;border:1.5px solid #1E4A2E;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit}
 
   /* RESULT */
   .result-box{background:var(--av-green);border-radius:14px;padding:1.25rem;text-align:center;margin-bottom:12px}
@@ -240,7 +250,12 @@
         <i class="ti ti-copy"></i> Copiar para WhatsApp
       </button>
     </div>
-    <button class="btn-secondary" onclick="resetar()">Novo checklist</button>
+    <button class="btn-secondary" onclick="voltarParaEditar()">
+      <i class="ti ti-pencil"></i> Continuar marcando tarefas
+    </button>
+    <button class="btn-danger" onclick="confirmarReset()">
+      <i class="ti ti-trash"></i> Novo checklist do zero
+    </button>
   </div>
 
   <div class="footer">Desenvolvido por <a href="https://evolue.com.br" target="_blank">Evolue</a> · Avatim ES</div>
@@ -318,6 +333,18 @@
   </div>
 </div>
 
+<!-- MODAL CONFIRMAÇÃO RESET -->
+<div class="modal-overlay" id="modal-reset">
+  <div class="modal-box">
+    <p class="modal-title">⚠️ Apagar progresso?</p>
+    <p class="modal-sub">O progresso salvo desta loja e data será apagado permanentemente. Tem certeza?</p>
+    <div class="modal-btns">
+      <button class="modal-btn-confirmar" onclick="resetar()">Sim, apagar e recomeçar</button>
+      <button class="modal-btn-cancelar" onclick="fecharModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 </div><!-- .app -->
 
 <script>
@@ -376,68 +403,6 @@ let filtroAtivo = 'todas';
 
 LOJAS.forEach(l => { registros[l] = null; });
 
-/* ---- LOCALSTORAGE ---- */
-function storageKey(loja, data){
-  return 'avatim_checklist_' + loja + '_' + data;
-}
-
-function salvarProgresso(){
-  const loja  = document.getElementById('loja').value;
-  const data  = document.getElementById('data').value;
-  const gerente = document.getElementById('gerente').value.trim();
-  const obs   = document.getElementById('obs').value.trim();
-  if(!loja || !data) return;
-  const payload = { state: {...state}, gerente, obs, savedAt: new Date().toISOString() };
-  try { localStorage.setItem(storageKey(loja, data), JSON.stringify(payload)); } catch(e){}
-}
-
-function carregarProgresso(){
-  const loja = document.getElementById('loja').value;
-  const data = document.getElementById('data').value;
-  if(!loja || !data) return;
-
-  // Limpa estado atual
-  Object.keys(state).forEach(k => delete state[k]);
-
-  try {
-    const raw = localStorage.getItem(storageKey(loja, data));
-    if(raw){
-      const payload = JSON.parse(raw);
-      // Restaura tarefas marcadas
-      Object.assign(state, payload.state || {});
-      // Restaura campos de texto
-      if(payload.gerente) document.getElementById('gerente').value = payload.gerente;
-      if(payload.obs)     document.getElementById('obs').value     = payload.obs;
-      mostrarBannerRestauracao();
-    }
-  } catch(e){}
-
-  renderAll();
-}
-
-function mostrarBannerRestauracao(){
-  let banner = document.getElementById('banner-restauracao');
-  if(!banner){
-    banner = document.createElement('div');
-    banner.id = 'banner-restauracao';
-    banner.style.cssText = 'background:#E8F5EC;border:1px solid #A8D4B0;border-radius:8px;padding:9px 14px;margin-bottom:12px;font-size:12px;color:#1E4A2E;display:flex;align-items:center;gap:8px;';
-    banner.innerHTML = '<i class="ti ti-refresh" style="font-size:16px;flex-shrink:0"></i><span>Progresso anterior restaurado para esta loja e data.</span>';
-    const formSection = document.getElementById('form-section');
-    const progCard = document.querySelector('.prog-card');
-    formSection.insertBefore(banner, progCard);
-  }
-  banner.style.display = 'flex';
-  setTimeout(()=>{ if(banner) banner.style.display='none'; }, 4000);
-}
-
-function limparProgressoSalvo(){
-  const loja = document.getElementById('loja').value;
-  const data = document.getElementById('data').value;
-  if(loja && data){
-    try { localStorage.removeItem(storageKey(loja, data)); } catch(e){}
-  }
-}
-
 /* ---- CHECKLIST ---- */
 function renderSection(key){
   const c = document.getElementById('tasks-'+key);
@@ -448,7 +413,7 @@ function renderSection(key){
     const d = document.createElement('div');
     d.className = 'task-row'+(state[id]?' done':'');
     d.innerHTML = `<div class="chk ${state[id]?'on':''}"></div><span class="task-text">${t}</span>`;
-    d.onclick = ()=>{ state[id]=!state[id]; renderAll(); salvarProgresso(); };
+    d.onclick = ()=>{ state[id]=!state[id]; renderAll(); };
     c.appendChild(d);
   });
   const total = TASKS[key].length;
@@ -496,8 +461,6 @@ function gerarResumo(){
   window._texto = texto;
   const time = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
   registros[loja] = {loja,gerente,data:dataFmt,pct,done,total,obs,time};
-  // Salva estado final e mantém no localStorage para o dia
-  salvarProgresso();
   atualizarPainel();
   document.getElementById('form-section').style.display='none';
   document.getElementById('result-section').style.display='block';
@@ -514,9 +477,22 @@ function copiar(){
   }
 }
 
+function voltarParaEditar(){
+  document.getElementById('form-section').style.display='';
+  document.getElementById('result-section').style.display='none';
+  window.scrollTo(0,0);
+}
+
+function confirmarReset(){
+  document.getElementById('modal-reset').classList.add('show');
+}
+
+function fecharModal(){
+  document.getElementById('modal-reset').classList.remove('show');
+}
+
 function resetar(){
-  // Limpa localStorage ao iniciar checklist novo no mesmo dia/loja
-  limparProgressoSalvo();
+  fecharModal();
   Object.keys(state).forEach(k=>delete state[k]);
   document.getElementById('form-section').style.display='';
   document.getElementById('result-section').style.display='none';
@@ -524,6 +500,20 @@ function resetar(){
   document.getElementById('obs').value='';
   renderAll();
   window.scrollTo(0,0);
+}
+
+function voltarParaEditar(){
+  document.getElementById('form-section').style.display='';
+  document.getElementById('result-section').style.display='none';
+  window.scrollTo(0,0);
+}
+
+function confirmarReset(){
+  document.getElementById('modal-reset').classList.add('show');
+}
+
+function fecharModal(){
+  document.getElementById('modal-reset').classList.remove('show');
 }
 
 /* ---- PAINEL ---- */
@@ -634,15 +624,6 @@ function showView(v){
 
 // Init
 document.getElementById('data').value = new Date().toISOString().split('T')[0];
-
-// Carrega progresso salvo ao trocar loja ou data
-document.getElementById('loja').addEventListener('change', carregarProgresso);
-document.getElementById('data').addEventListener('change', carregarProgresso);
-
-// Salva observações e responsável ao digitar
-document.getElementById('obs').addEventListener('input', salvarProgresso);
-document.getElementById('gerente').addEventListener('input', salvarProgresso);
-
 renderAll();
 </script>
 </body>
