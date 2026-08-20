@@ -73,6 +73,16 @@
   /* BUTTONS */
   .btn-primary{width:100%;padding:14px;background:var(--av-green);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;letter-spacing:0.03em;transition:background .15s;margin-top:6px;display:flex;align-items:center;justify-content:center;gap:8px}
   .btn-primary:active{background:var(--av-green-mid)}
+  .btn-danger{width:100%;padding:12px;background:transparent;color:#8B2020;border:1.5px solid #8B2020;border-radius:10px;font-size:14px;cursor:pointer;margin-top:8px;font-family:inherit;font-weight:500;display:flex;align-items:center;justify-content:center;gap:6px}
+  .btn-danger:active{background:#FCE8E8}
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;padding:1.5rem}
+  .modal-overlay.show{display:flex}
+  .modal-box{background:#fff;border-radius:14px;padding:1.5rem;max-width:340px;width:100%;text-align:center}
+  .modal-title{font-size:16px;font-weight:600;color:#1A2E1F;margin-bottom:8px}
+  .modal-sub{font-size:13px;color:#5A7A5F;line-height:1.5;margin-bottom:1.25rem}
+  .modal-btns{display:flex;flex-direction:column;gap:8px}
+  .modal-btn-confirmar{width:100%;padding:12px;background:#8B2020;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+  .modal-btn-cancelar{width:100%;padding:12px;background:transparent;color:#1E4A2E;border:1.5px solid #1E4A2E;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit}
   .btn-secondary{width:100%;padding:12px;background:transparent;color:var(--av-green);border:1.5px solid var(--av-green);border-radius:10px;font-size:14px;cursor:pointer;margin-top:10px;font-family:inherit;font-weight:500}
 
   /* RESULT */
@@ -129,6 +139,12 @@
   /* FOOTER */
   .footer{text-align:center;padding:1.5rem 1rem 2rem;font-size:11px;color:var(--av-muted)}
   .footer a{color:var(--av-wood);text-decoration:none}
+  .task-obs-btn{width:22px;height:22px;border:1px solid var(--av-beige-dark);border-radius:5px;background:#fff;color:var(--av-muted);font-size:15px;font-weight:600;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1;transition:all .15s;padding:0;font-family:inherit}
+  .task-obs-btn.active{background:var(--av-beige);border-color:var(--av-wood-light);color:var(--av-wood)}
+  .task-obs-wrap{display:none;padding:4px 14px 10px 47px}
+  .task-obs-wrap.show{display:block}
+  .task-obs-input{width:100%;padding:7px 10px;border:1px solid var(--av-beige-dark);border-radius:7px;font-size:12px;font-family:inherit;background:var(--av-cream);color:var(--av-text);resize:none;height:58px}
+  .task-obs-input:focus{outline:none;border-color:var(--av-wood-light)}
 </style>
 </head>
 <body>
@@ -321,34 +337,33 @@ const LOJAS = [
 
 const TASKS = {
   abertura:[
-    'Chegou 10 min antes da abertura',
-    'Ligou o ar condicionado',
-    'Ligou o computador e abriu sistema/caixa',
-    'Ligou o tablet',
-    'Colocou música ambiente'
+    'Ligar o ar condicionado',
+    'Ligar o computador e abrir sistema/caixa',
+    'Ligar o tablet',
+    'Colocar música ambiente'
   ],
   operacao:[
-    'Verificou e respondeu grupo de informações',
-    'Repôs sacolas no balcão (com e sem laços)',
-    'Fez a contagem diária do caixa',
-    'Fez laços / reposição de estoque',
-    'Conferiu repouso das gavetas e módulos',
-    'Apertou F10 e conferiu',
-    'Retirou o lixo'
+    'Verificar e responder solicitações no grupo de informações',
+    'Repor sacolas no balcão (com e sem laços)',
+    'Fazer a contagem diária do caixa',
+    'Fazer laços e repor estoque',
+    'Conferir repouso das gavetas e módulos',
+    'Apertar F10 e conferir',
+    'Retirar o lixo'
   ],
   limpeza:[
-    'Limpou os módulos',
-    'Limpou e organizou as gavetas',
-    'Limpou a mesa',
-    'Limpou a vitrine',
-    'Lavou a pia',
-    'Varreu e passou pano na loja'
+    'Limpar os módulos',
+    'Limpar e organizar as gavetas',
+    'Limpar a mesa',
+    'Limpar a vitrine',
+    'Lavar a pia',
+    'Varrer e passar pano na loja'
   ],
   fechamento:[
-    'Fechou o caixa e enviou foto',
-    'Conferiu se desligou tudo',
-    'Trancou e entregou chave conforme procedimento',
-    'Registrou observações do dia'
+    'Fechar o caixa e enviar foto',
+    'Conferir se desligou tudo',
+    'Trancar e entregar chave conforme procedimento',
+    'Registrar observações do dia'
   ]
 };
 // =============================================
@@ -358,28 +373,107 @@ const ICONS= {abertura:'🌅',operacao:'🏪',limpeza:'✨',fechamento:'🌙'};
 const CIRC = 150.8;
 
 const state = {};
+const obsState = {};
 const registros = {};
 let logado = false;
 let filtroAtivo = 'todas';
 
 LOJAS.forEach(l => { registros[l] = null; });
 
+/* ---- LOCALSTORAGE ---- */
+function storageKey(loja, data){ return 'avatim_ck_' + loja + '_' + data; }
+
+function salvarProgresso(){
+  const loja    = document.getElementById('loja').value;
+  const data    = document.getElementById('data').value;
+  const gerente = document.getElementById('gerente').value.trim();
+  const obs     = document.getElementById('obs').value.trim();
+  if(!loja || !data) return;
+  const payload = { state:{...state}, obsState:{...obsState}, gerente, obs, ts: Date.now() };
+  try { localStorage.setItem(storageKey(loja,data), JSON.stringify(payload)); } catch(e){}
+}
+
+function carregarProgresso(){
+  const loja = document.getElementById('loja').value;
+  const data = document.getElementById('data').value;
+  if(!loja || !data) return;
+  Object.keys(state).forEach(k=>delete state[k]);
+  Object.keys(obsState).forEach(k=>delete obsState[k]);
+  try {
+    const raw = localStorage.getItem(storageKey(loja,data));
+    if(raw){
+      const p = JSON.parse(raw);
+      Object.assign(state,    p.state    || {});
+      Object.assign(obsState, p.obsState || {});
+      if(p.gerente) document.getElementById('gerente').value = p.gerente;
+      if(p.obs)     document.getElementById('obs').value     = p.obs;
+      mostrarBannerRestauracao();
+    }
+  } catch(e){}
+  renderAll();
+}
+
+function mostrarBannerRestauracao(){
+  let b = document.getElementById('banner-rest');
+  if(!b){
+    b = document.createElement('div');
+    b.id = 'banner-rest';
+    b.style.cssText='background:#E8F5EC;border:1px solid #A8D4B0;border-radius:8px;padding:9px 14px;margin-bottom:12px;font-size:12px;color:#1E4A2E;display:flex;align-items:center;gap:8px;';
+    b.innerHTML='<i class="ti ti-refresh" style="font-size:16px;flex-shrink:0"></i><span>Progresso anterior restaurado para esta loja e data.</span>';
+    const prog = document.querySelector('.prog-card');
+    prog.parentNode.insertBefore(b, prog);
+  }
+  b.style.display='flex';
+  setTimeout(()=>{ b.style.display='none'; }, 4000);
+}
+
+function limparProgressoSalvo(){
+  const loja = document.getElementById('loja').value;
+  const data = document.getElementById('data').value;
+  if(loja && data){ try{ localStorage.removeItem(storageKey(loja,data)); }catch(e){} }
+}
+
 /* ---- CHECKLIST ---- */
 function renderSection(key){
   const c = document.getElementById('tasks-'+key);
   c.innerHTML = '';
   TASKS[key].forEach((t,i)=>{
-    const id = key+'_'+i;
-    if(!(id in state)) state[id] = false;
-    const d = document.createElement('div');
-    d.className = 'task-row'+(state[id]?' done':'');
-    d.innerHTML = `<div class="chk ${state[id]?'on':''}"></div><span class="task-text">${t}</span>`;
-    d.onclick = ()=>{ state[id]=!state[id]; renderAll(); };
-    c.appendChild(d);
+    const id   = key+'_'+i;
+    const obsId= 'obs_'+id;
+    if(!(id in state))     state[id]    = false;
+    if(!(obsId in obsState)) obsState[obsId] = '';
+
+    const row = document.createElement('div');
+    row.className = 'task-row'+(state[id]?' done':'');
+    row.innerHTML = `<div class="chk ${state[id]?'on':''}"></div><span class="task-text">${t}</span><button class="task-obs-btn${obsState[obsId]?' active':''}" onclick="toggleObs(event,'${id}')" title="Adicionar observação">+</button>`;
+    row.querySelector('.chk').addEventListener('click', ()=>{ state[id]=!state[id]; renderAll(); salvarProgresso(); });
+    row.querySelector('.task-text').addEventListener('click', ()=>{ state[id]=!state[id]; renderAll(); salvarProgresso(); });
+
+    const obsWrap = document.createElement('div');
+    obsWrap.className = 'task-obs-wrap';
+    obsWrap.id = 'obswrap_'+id;
+    obsWrap.innerHTML = `<textarea class="task-obs-input" placeholder="Observação sobre este item..." oninput="saveObs('${id}',this.value)">${obsState[obsId]}</textarea>`;
+
+    c.appendChild(row);
+    c.appendChild(obsWrap);
   });
   const total = TASKS[key].length;
   const done  = TASKS[key].filter((_,i)=>state[key+'_'+i]).length;
   document.getElementById('cnt-'+key).textContent = done+'/'+total;
+}
+
+function toggleObs(e, id){
+  e.stopPropagation();
+  const wrap = document.getElementById('obswrap_'+id);
+  const btn  = e.currentTarget;
+  wrap.classList.toggle('show');
+  btn.classList.toggle('active');
+  if(wrap.classList.contains('show')) wrap.querySelector('textarea').focus();
+}
+
+function saveObs(id, val){
+  obsState['obs_'+id] = val;
+  salvarProgresso();
 }
 
 function updateProgress(){
@@ -416,12 +510,23 @@ function gerarResumo(){
   });
   const pct = Math.round(done/total*100);
   lines.push(`📊 *Conclusão: ${done}/${total} (${pct}%)*`);
-  if(obs) lines.push(`📝 *Obs:* ${obs}`);
+  if(obs) lines.push(`📝 *Obs. gerais:* ${obs}`);
+  const obsItens = Object.entries(obsState).filter(([k,v])=>v.trim());
+  if(obsItens.length){
+    lines.push('');
+    lines.push('📌 *Observações por item:*');
+    obsItens.forEach(([k,v])=>{
+      const [sec,idx] = k.replace('obs_','').split('_');
+      const label = TASKS[sec]?.[parseInt(idx)];
+      if(label) lines.push(`• ${label}: ${v.trim()}`);
+    });
+  }
   const texto = lines.join('\n');
   document.getElementById('result-preview').textContent = texto;
   window._texto = texto;
   const time = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
   registros[loja] = {loja,gerente,data:dataFmt,pct,done,total,obs,time};
+  salvarProgresso();
   atualizarPainel();
   document.getElementById('form-section').style.display='none';
   document.getElementById('result-section').style.display='block';
@@ -438,10 +543,28 @@ function copiar(){
   }
 }
 
-function resetar(){
-  Object.keys(state).forEach(k=>delete state[k]);
+function voltarParaEditar(){
   document.getElementById('form-section').style.display='';
   document.getElementById('result-section').style.display='none';
+  window.scrollTo(0,0);
+}
+
+function confirmarReset(){
+  document.getElementById('modal-reset').classList.add('show');
+}
+
+function fecharModal(){
+  document.getElementById('modal-reset').classList.remove('show');
+}
+
+function resetar(){
+  fecharModal();
+  limparProgressoSalvo();
+  Object.keys(state).forEach(k=>delete state[k]);
+  Object.keys(obsState).forEach(k=>delete obsState[k]);
+  document.getElementById('form-section').style.display='';
+  document.getElementById('result-section').style.display='none';
+  document.getElementById('gerente').value='';
   document.getElementById('obs').value='';
   renderAll();
   window.scrollTo(0,0);
@@ -555,6 +678,10 @@ function showView(v){
 
 // Init
 document.getElementById('data').value = new Date().toISOString().split('T')[0];
+document.getElementById('loja').addEventListener('change', carregarProgresso);
+document.getElementById('data').addEventListener('change', carregarProgresso);
+document.getElementById('obs').addEventListener('input', salvarProgresso);
+document.getElementById('gerente').addEventListener('input', salvarProgresso);
 renderAll();
 </script>
 </body>
