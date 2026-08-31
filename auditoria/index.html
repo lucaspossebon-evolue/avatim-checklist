@@ -99,7 +99,10 @@ main{padding-top:20px}
 textarea.obs{width:100%;border:1px solid var(--linha);border-radius:10px;padding:10px;min-height:62px;resize:vertical;background:#fff;line-height:1.4}
 textarea.obs:focus{outline:2px solid var(--folha);outline-offset:-1px;border-color:transparent}
 .foto-bar{display:flex;align-items:center;gap:10px;margin-top:9px;flex-wrap:wrap}
-.btn-foto{border:1.5px dashed #B9C0B4;border-radius:10px;padding:9px 13px;font-size:13.5px;font-weight:600;color:var(--mata-2);background:#fff;display:inline-flex;align-items:center;gap:7px}
+.btn-foto{border:1.5px dashed #B9C0B4;border-radius:10px;padding:9px 13px;font-size:13.5px;font-weight:600;color:var(--mata-2);background:#fff;display:inline-flex;align-items:center;gap:6px;flex:1;justify-content:center;min-width:0}
+.btn-foto:active{background:#F1F4EE}
+.b-cam::before{content:'\1F4F7';font-size:14px}
+.b-gal::before{content:'\1F5BC';font-size:14px}
 .thumbs{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
 .thumb{position:relative;width:66px;height:66px;border-radius:9px;overflow:hidden;border:1px solid var(--linha)}
 .thumb img{width:100%;height:100%;object-fit:cover;display:block}
@@ -159,6 +162,10 @@ textarea.obs:focus{outline:2px solid var(--folha);outline-offset:-1px;border-col
 table.plano{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
 table.plano th{text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--cinza);border-bottom:1.5px solid var(--linha);padding:7px 6px}
 table.plano td{border-bottom:1px solid var(--linha);padding:9px 6px;vertical-align:top}
+.obs-item{border-left:3px solid var(--folha);background:#F4F7F2;border-radius:0 10px 10px 0;padding:13px 14px;margin-bottom:11px}
+.obs-item .h{font-size:15px;font-weight:600;line-height:1.35}
+.obs-item .meta{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--folha);font-weight:600;margin-bottom:3px}
+.obs-item .obs{font-size:13.5px;color:#4A514A;margin-top:7px;font-style:italic}
 .vazio{text-align:center;padding:26px 12px;color:var(--cinza);font-size:14px}
 .retomar{display:none;background:#FBF6EC;border:1px solid #E8D6B4;border-left:3px solid var(--ocre);border-radius:0 var(--r) var(--r) 0;padding:15px;margin-bottom:14px}
 .retomar.show{display:block}
@@ -537,8 +544,10 @@ function renderBloco(){
       <div class="extras ${r.status?'show':''}">
         <textarea class="obs" placeholder="Observação: o que exatamente você viu">${r.obs||''}</textarea>
         <div class="foto-bar">
-          <button class="btn-foto">＋ Anexar foto</button>
-          <input type="file" accept="image/*" capture="environment" multiple class="hidden">
+          <button class="btn-foto b-cam">Tirar foto</button>
+          <button class="btn-foto b-gal">Escolher da galeria</button>
+          <input type="file" accept="image/*" capture="environment" multiple class="hidden inp-cam">
+          <input type="file" accept="image/*" multiple class="hidden inp-gal">
         </div>
         <div class="thumbs"></div>
         <div class="aviso-foto ${r.status==='NC'&&(!r.fotos||!r.fotos.length)?'show':''}">Anexe ao menos uma foto como evidência.</div>
@@ -555,10 +564,14 @@ function renderBloco(){
     });
     const ta=el.querySelector('.obs');
     if(ta) ta.oninput=()=>{visita.respostas[id].obs=ta.value;salvar()};
-    const inp=el.querySelector('input[type=file]');
-    const bf=el.querySelector('.btn-foto');
-    if(bf) bf.onclick=()=>inp.click();
-    if(inp) inp.onchange=e=>addFotos(e,id);
+    const inpCam=el.querySelector('.inp-cam');
+    const inpGal=el.querySelector('.inp-gal');
+    const bCam=el.querySelector('.b-cam');
+    const bGal=el.querySelector('.b-gal');
+    if(bCam) bCam.onclick=()=>inpCam.click();
+    if(bGal) bGal.onclick=()=>inpGal.click();
+    if(inpCam) inpCam.onchange=e=>addFotos(e,id);
+    if(inpGal) inpGal.onchange=e=>addFotos(e,id);
     const th=el.querySelector('.thumbs');
     if(th) desenharThumbs(th,id,r.fotos||[]);
     cont.appendChild(el);
@@ -664,6 +677,15 @@ function listaNC(){
   }));
   return out.sort((a,b)=>({alta:0,media:1,baixa:2}[a.c]-{alta:0,media:1,baixa:2}[b.c]));
 }
+function listaObs(){
+  const out=[];
+  BLOCOS.forEach((b,i)=>b.itens.forEach((it,j)=>{
+    const r=visita.respostas[`${i}.${j}`];
+    if(r && (r.status==='C'||r.status==='NA') && ((r.obs&&r.obs.trim()) || (r.fotos&&r.fotos.length)))
+      out.push({id:`${i}.${j}`,cod:`${i+1}.${j+1}`,bloco:b.n,status:r.status,...it,obs:(r.obs||'').trim(),fotos:r.fotos||[]});
+  }));
+  return out;
+}
 function prazoPadrao(crit){
   const d=new Date(visita.data||new Date());
   d.setDate(d.getDate()+PRAZO[crit]);
@@ -737,6 +759,22 @@ function gerarRelatorio(){
     <div class="card"><div class="vazio">Nenhuma não conformidade registrada nesta visita. Reconheça o resultado com a equipe da loja.</div></div>`;
   }
 
+  const obss=listaObs();
+  if(obss.length){
+    h+=`<div class="sec-title">Registros em itens conformes</div>
+    <div class="card" style="padding:14px 16px"><div style="font-size:13px;color:var(--cinza);line-height:1.5">
+      Anotações feitas em itens que passaram na avaliação ou não se aplicam à loja. Não afetam a nota nem geram ação,
+      mas ficam registradas para acompanhamento na próxima visita.</div></div>`;
+    obss.forEach(o=>{
+      h+=`<div class="obs-item">
+        <div class="meta">${o.cod} · ${o.bloco} · ${o.status==='C'?'CONFORME':'NÃO SE APLICA'}</div>
+        <div class="h">${o.t}</div>
+        ${o.obs?`<div class="obs">"${o.obs}"</div>`:''}
+        ${o.fotos.length?`<div class="thumbs">${o.fotos.map(f=>`<div class="thumb"><img src="${f}" alt="Registro"></div>`).join('')}</div>`:''}
+      </div>`;
+    });
+  }
+
   h+=`<div class="no-print" style="margin-top:22px">
     <button class="btn btn-p" onclick="window.print()">Imprimir ou salvar em PDF</button>
     <button class="btn btn-o" onclick="copiarWhats()">Copiar resumo para WhatsApp</button>
@@ -790,6 +828,12 @@ function copiarWhats(){
     t+=`\n• [${n.cod}] ${n.t}\n  → ${n.s}\n  Resp.: ${a.resp||'a definir'} | Até: ${(a.prazo||prazoPadrao(n.c)).split('-').reverse().join('/')}\n`;
   });
   if(ncs.length>8)t+=`\n(+${ncs.length-8} itens no relatório completo)\n`;
+  const obss=listaObs().filter(o=>o.obs);
+  if(obss.length){
+    t+=`\n*Registros em itens conformes: ${obss.length}*\n`;
+    obss.slice(0,6).forEach(o=>{t+=`\n• [${o.cod}] ${o.t}\n  ${o.obs}\n`});
+    if(obss.length>6)t+=`\n(+${obss.length-6} registros no relatório completo)\n`;
+  }
   navigator.clipboard.writeText(t).then(()=>alert('Resumo copiado. Cole no WhatsApp.'),()=>{
     prompt('Copie o texto abaixo:',t);
   });
