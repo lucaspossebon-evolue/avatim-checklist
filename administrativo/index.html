@@ -129,6 +129,7 @@ td.obs textarea::placeholder{color:var(--musgo)}
 .txt .d{font-family:var(--rot);font-size:10.5px;letter-spacing:.06em;color:var(--musgo);margin-top:4px}
 .selo{display:inline-block;font-family:var(--rot);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--linha);padding:1px 5px;margin-left:6px;color:var(--musgo);vertical-align:1px}
 .selo.prazo{border-color:var(--ambar);color:var(--ambar)}
+.selo.desloc{border-color:#B8C6BB;color:var(--folha);background:#F2F5F1}
 .acoes{display:flex;flex-direction:column;gap:5px;flex:0 0 auto}
 .mini{font-family:var(--rot);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--linha);padding:4px 7px;color:var(--musgo);background:#fff}
 .mini.on{background:var(--tinta);color:#fff;border-color:var(--tinta)}
@@ -365,9 +366,9 @@ const ROTINAS = {
             'Plano odontológico — depois de 2 meses']},
       {id:'j5', t:'Conferência de depósito', d:'7 lojas', quando:'seg'},
       {id:'j6', t:'Conferência boletos distribuição', quando:'seg'},
-      {id:'j7', t:'Recarga e verificação VT', quando:'d26'},
+      {id:'j7', t:'Recarga e verificação VT', quando:'d26', ajuste:'antes'},
       {id:'j8', t:'Faturas Patrus / Planilha Paula', quando:'d26'},
-      {id:'j9', t:'Recarga e verificação VR', quando:'d01'},
+      {id:'j9', t:'Recarga e verificação VR', quando:'d01', ajuste:'antes'},
       {id:'jc1', t:'Pasta com documentos das lojas', quando:'cont'},
       {id:'jc2', t:'Pasta com documentos dos funcionários', d:'Contratação · plano de saúde · odontológico', quando:'cont'},
       {id:'jc3', t:'Planilha com vencimento de seguro das lojas', quando:'cont'},
@@ -439,19 +440,49 @@ const ehUltimo = d => d.getDate() === ultimoDia(d);
 const soma = (d,n) => { const x = new Date(d); x.setDate(x.getDate()+n); x.setHours(12,0,0,0); return x; };
 const segundaDa = d => soma(d, d.getDay() === 0 ? -6 : 1 - d.getDay());
 
-function venceHoje(q, d){
-  const dia = d.getDate(), sem = d.getDay();
-  switch(q){
-    case 'diario': return sem >= 1 && sem <= 5;
-    case 'seg': return sem === 1;
-    case 'ter': return sem === 2;
-    case 'd01': return dia === 1;
-    case 'd05': return dia === 5;
-    case 'd10': return dia === 10;
-    case 'd26': return dia === 26;
-    case 'ultimo': return ehUltimo(d);
-    default: return false;
+const fimDeSemana = d => d.getDay() === 0 || d.getDay() === 6;
+/* 'antes' antecipa para a sexta anterior, 'depois' empurra para a segunda seguinte.
+   Antecipa quem precisa estar pronto até a data (vale-transporte, vale-refeição e
+   o fechamento do último dia); o resto empurra. */
+function ajusteDe(i){
+  if(i.quando === 'ultimo') return 'antes';
+  return i.ajuste || 'depois';
+}
+function desloca(d, dir){
+  let x = new Date(d), g = 0;
+  while(fimDeSemana(x) && g++ < 8) x = soma(x, dir);
+  return x;
+}
+function dataPrevista(i, ref){
+  if(MENSAIS.indexOf(i.quando) < 0) return null;
+  return desloca(dataDoMes(i.quando, ref), ajusteDe(i) === 'antes' ? -1 : 1);
+}
+function venceEm(i, d){
+  const q = i.quando, sem = d.getDay();
+  if(q === 'diario') return sem >= 1 && sem <= 5;
+  if(q === 'seg') return sem === 1;
+  if(q === 'ter') return sem === 2;
+  if(MENSAIS.indexOf(q) < 0) return false;
+  const cand = [dataPrevista(i, d)];
+  if(ajusteDe(i) === 'antes'){
+    /* antecipar pode jogar a data para o mês anterior — olha o mês seguinte também */
+    const prox = new Date(d.getFullYear(), d.getMonth() + 1, 1); prox.setHours(12,0,0,0);
+    cand.push(dataPrevista(i, prox));
   }
+  return cand.some(x => x && kd(x) === kd(d));
+}
+/* Quando a data efetiva difere da nominal, devolve o aviso para exibir. */
+function notaAjuste(i, d){
+  if(MENSAIS.indexOf(i.quando) < 0) return '';
+  const nominal = i.quando === 'ultimo' ? 'o último dia' : 'o dia ' + i.quando.slice(1);
+  const refs = [d];
+  if(ajusteDe(i) === 'antes'){ const x = new Date(d.getFullYear(), d.getMonth()+1, 1); x.setHours(12,0,0,0); refs.push(x); }
+  for(const r of refs){
+    const bruta = dataDoMes(i.quando, r), efet = dataPrevista(i, r);
+    if(efet && kd(efet) === kd(d) && kd(bruta) !== kd(efet))
+      return `${ajusteDe(i) === 'antes' ? 'antecipada' : 'adiada'}, ${nominal} caiu ${DIAS[bruta.getDay()] === 'sábado' ? 'no sábado' : 'no domingo'}`;
+  }
+  return '';
 }
 function dataDoMes(q, ref){
   const y = ref.getFullYear(), m = ref.getMonth();
@@ -464,7 +495,7 @@ function dataDoMes(q, ref){
    ============================================================ */
 const HOJE = kd(hoje);
 const SENHA = 'avatim2025';
-const VERSAO = '1.0';
+const VERSAO = '1.1';
 let pessoa = null, aba = 'hoje', cache = {};
 let refSemana = segundaDa(hoje), refMes = new Date(hoje);
 
@@ -530,7 +561,7 @@ function inicioLido(p){
 function reg(dt,id){ const d = dia(dt); if(!d[id]) d[id] = {st:null, obs:'', sub:{}, lojas:{}}; return d[id]; }
 function grava(dt){ registraInicio(pessoa); Store.set(chave(pessoa,dt), JSON.stringify(dia(dt))); }
 
-const doDia = (p,d) => ROTINAS[p].itens.filter(i => i.quando !== 'cont' && venceHoje(i.quando, d));
+const doDia = (p,d) => ROTINAS[p].itens.filter(i => i.quando !== 'cont' && venceEm(i, d));
 const contInuas = p => ROTINAS[p].itens.filter(i => i.quando === 'cont');
 
 function progresso(){
@@ -849,7 +880,7 @@ function gradeSemana(){
 
   const corpo = linhas.map((i,n) => {
     const cels = dias.map(d => {
-      const dt = kd(d), aplica = venceHoje(i.quando, d);
+      const dt = kd(d), aplica = venceEm(i, d);
       if(!aplica) return '<td class="vaz"></td>';
       const r = dia(dt)[i.id] || {};
       const atr = !r.st && dt < HOJE && dt >= inicioDe(pessoa);
@@ -906,18 +937,20 @@ function gradeSemana(){
 function tabelaMes(){
   const linhas = [];
   MENSAIS.forEach(q => {
-    const d = dataDoMes(q, refMes);
-    ROTINAS[pessoa].itens.filter(i => i.quando === q).forEach(i => linhas.push({d, i}));
+    ROTINAS[pessoa].itens.filter(i => i.quando === q).forEach(i => {
+      const d = dataPrevista(i, refMes);
+      linhas.push({d, i, nota: notaAjuste(i, d)});
+    });
   });
   linhas.sort((a,b) => a.d - b.d);
 
-  const corpo = linhas.length ? linhas.map(({d,i}) => {
+  const corpo = linhas.length ? linhas.map(({d,i,nota}) => {
     const dt = kd(d), r = dia(dt)[i.id] || {};
     const passou = dt < HOJE;
     const atr = !r.st && passou && dt >= inicioDe(pessoa);
     const dep = (r.st === 'ok' && !r.noPrazo) ? atrasoDias(dt, r.em) : 0;
     return `<tr>
-      <td class="tarefa" style="width:16%">${bdl(d)}<span class="dt">${DIAS[d.getDay()]}</span></td>
+      <td class="tarefa" style="width:16%">${bdl(d)}<span class="dt">${DIAS[d.getDay()]}${nota ? '<br>' + nota : ''}</span></td>
       <td class="tarefa">${i.t}${i.prazo ? `<span class="selo prazo">${i.prazo}</span>` : ''}
         ${i.d ? `<span class="dt">${i.d}</span>` : ''}</td>
       <td style="width:15%" class="${dt === HOJE ? 'colhoje' : ''}">
@@ -949,6 +982,7 @@ function tabelaMes(){
    ============================================================ */
 function linhaItem(i){
   const r = dia(HOJE)[i.id] || {};
+  const nota = notaAjuste(i, hoje);
   const cls = r.st === 'ok' ? ' feito' : r.st === 'na' ? ' naa' : '';
   const mk = r.st === 'ok' ? '✓' : r.st === 'na' ? '–' : '';
   let sub = '';
@@ -972,7 +1006,7 @@ function linhaItem(i){
   return `<div class="item${cls}">
     <div class="linha" onclick="alterna('${i.id}')">
       <div class="marca-box">${mk}</div>
-      <div class="txt"><div class="t">${i.t}${i.selo ? `<span class="selo">${i.selo}</span>` : ''}${i.prazo ? `<span class="selo prazo">${i.prazo}</span>` : ''}</div>
+      <div class="txt"><div class="t">${i.t}${i.selo ? `<span class="selo">${i.selo}</span>` : ''}${i.prazo ? `<span class="selo prazo">${i.prazo}</span>` : ''}${nota ? `<span class="selo desloc">${nota}</span>` : ''}</div>
         ${i.d ? `<div class="d">${i.d}</div>` : ''}</div>
       <div class="acoes">
         <button class="mini${r.aberto ? ' on' : ''}" onclick="abreObs('${i.id}',event)">Obs</button>
@@ -1006,7 +1040,7 @@ function capa(){
     <h2>Checklist do dia</h2>
     <p>${bdl(hoje)} · ${DIAS[hoje.getDay()]}</p>
     ${Object.entries(ROTINAS).map(([k,v]) => {
-      const n = ROTINAS[k].itens.filter(i => i.quando !== 'cont' && venceHoje(i.quando, hoje)).length;
+      const n = ROTINAS[k].itens.filter(i => i.quando !== 'cont' && venceEm(i, hoje)).length;
       return `<button class="escolha" onclick="escolhe('${k}')">
         <strong>${v.nome}</strong><span>${v.area}</span>
         <em>${n} ${n === 1 ? 'tarefa hoje' : 'tarefas hoje'}</em></button>`;
