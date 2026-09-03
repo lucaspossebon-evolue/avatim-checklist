@@ -176,6 +176,28 @@ td.obs input.tem{color:var(--brasa)}
   @page{size:A4 landscape;margin:12mm}
 }
 
+.dia > .cab{gap:9px}
+.hojetag{
+  font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  background:var(--tinta);color:#fff;border-radius:999px;padding:2px 9px;
+}
+.pl{padding:11px 13px;border-top:1px solid #EDF0EA}
+.pl:first-of-type{border-top:none}
+.plcab{display:flex;align-items:center;gap:10px}
+.plcab strong{font-size:15px}
+.plcab .pc{
+  margin-left:auto;font-size:11px;font-weight:700;padding:2px 9px;
+  border:1px solid var(--linha);border-radius:999px;
+}
+.plcab .pc.cheio{background:var(--ok);color:#fff;border-color:var(--ok)}
+.plcab .pc.meio{background:#F3E7D3;color:var(--ambar);border-color:#E3CFAE}
+.plcab .pc.zero{background:#FBEEEA;color:var(--brasa);border-color:#E8C4B8}
+.pl .nada{margin:6px 0 0;font-size:13.5px;color:var(--musgo)}
+.pl ul{margin:6px 0 0;padding:0;list-style:none;font-size:13.5px}
+.pl li{padding:2px 0;color:var(--folha)}
+.pl li b{color:var(--brasa);font-weight:700}
+.pl li.atr{color:var(--brasa);font-weight:600}
+
 /* ---------- atraso ---------- */
 .cel.atr{background:#FBEEEA;color:var(--brasa);font-weight:700}
 .cel.atr:hover{background:#F7E3DD}
@@ -410,6 +432,13 @@ function dia(dt){
   }
   return cache[dt];
 }
+function leDia(p, dt){
+  try { return JSON.parse(Store.get(chave(p,dt))) || {}; } catch(e){ return {}; }
+}
+function inicioLido(p){
+  const v = Store.get(`avatim-adm:inicio:${p}`);
+  return (v && /^\d{4}-\d{2}-\d{2}$/.test(v)) ? v : null;
+}
 function reg(dt,id){ const d = dia(dt); if(!d[id]) d[id] = {st:null, obs:'', sub:{}, lojas:{}}; return d[id]; }
 function grava(dt){ Store.set(chave(pessoa,dt), JSON.stringify(dia(dt))); }
 
@@ -551,42 +580,64 @@ function entraGestao(){
   }
   mostraGestao();
 }
-function mostraGestao(){
-  const regs = [];
-  Store.keys().filter(k => k.indexOf('avatim-adm:') === 0).forEach(k => {
-    const [,p,dt] = k.split(':');
-    if(!ROTINAS[p]) return;
-    let d; try { d = JSON.parse(Store.get(k)) || {}; } catch(e){ return; }
-    const dObj = new Date(dt + 'T12:00:00');
-    const lista = ROTINAS[p].itens.filter(i => i.quando !== 'cont' && venceHoje(i.quando, dObj));
-    const total = lista.filter(i => (d[i.id]||{}).st !== 'na').length;
-    const feitos = lista.filter(i => (d[i.id]||{}).st === 'ok').length;
-    const pend = lista.filter(i => !(d[i.id]||{}).st).map(i => i.t);
-    const notas = [];
-    lista.forEach(i => {
-      const r = d[i.id] || {};
-      Object.entries(r.lojas||{}).forEach(([n,v]) => { if(v.div && v.div.trim()) notas.push(`${LOJAS[n][0]} (${LOJAS[n][1]}): ${v.div.trim()}`); });
-      if(r.obs && r.obs.trim()) notas.push(`${i.t}: ${r.obs.trim()}`);
-    });
-    regs.push({p, dt, dObj, total, feitos, pend, notas});
-  });
-  regs.sort((a,b) => b.dt.localeCompare(a.dt) || a.p.localeCompare(b.p));
-  const corpo = regs.length ? regs.map(r => {
-    const pc = r.total ? Math.round(r.feitos/r.total*100) : 100;
-    return `<div class="dia"><div class="cab">
-      <strong>${ROTINAS[r.p].nome}</strong>
-      <span class="qd">${bdl(r.dObj)} · ${DIAS[r.dObj.getDay()]}</span>
-      <span class="pc ${pc === 100 ? 'cheio' : pc >= 50 ? 'meio' : ''}">${r.feitos}/${r.total}</span></div>
-      ${(r.pend.length || r.notas.length) ? `<ul>
-        ${r.pend.map(x => `<li class="${r.dt < HOJE ? 'atr' : ''}">◻ ${esc(x)}${r.dt < HOJE ? ' — atrasada' : ''}</li>`).join('')}
-        ${r.notas.map(x => `<li><b>!</b> ${esc(x)}</li>`).join('')}</ul>` : ''}
-    </div>`;
-  }).join('') : '<p class="vazio">Nenhum registro ainda.</p>';
+function mostraGestao(qtd){
+  qtd = qtd || 8;
+  /* Monta os dias para trás, incluindo só os que têm alguma tarefa prevista
+     para alguém — assim um sábado com tarefa de dia 05 continua aparecendo. */
+  const pessoas = Object.keys(ROTINAS);
+  const datas = [];
+  let d = new Date(hoje), guarda = 0;
+  while(datas.length < qtd && guarda++ < 70){
+    if(pessoas.some(p => doDia(p, d).length)) datas.push(new Date(d));
+    d = soma(d, -1);
+  }
+
+  const blocos = datas.map(dObj => {
+    const dt = kd(dObj), passado = dt < HOJE;
+    const linhas = pessoas.map(p => {
+      const ini = inicioLido(p);
+      if(ini && dt < ini) return '';                 /* antes de começar a usar */
+      const lista = doDia(p, dObj);
+      if(!lista.length) return '';
+      const r = leDia(p, dt);
+      const total = lista.filter(i => (r[i.id]||{}).st !== 'na').length;
+      const feitos = lista.filter(i => (r[i.id]||{}).st === 'ok').length;
+      const pend = lista.filter(i => !(r[i.id]||{}).st).map(i => i.t);
+      const notas = [];
+      lista.forEach(i => {
+        const x = r[i.id] || {};
+        Object.entries(x.lojas||{}).forEach(([n,v]) => {
+          if(v.div && v.div.trim()) notas.push(`${LOJAS[n][0]} (${LOJAS[n][1]}): ${v.div.trim()}`);
+        });
+        if(x.obs && x.obs.trim()) notas.push(`${i.t}: ${x.obs.trim()}`);
+      });
+      const pc = total ? Math.round(feitos/total*100) : 100;
+      const semRegistro = !Object.keys(r).length;
+      return `<div class="pl">
+        <div class="plcab">
+          <strong>${ROTINAS[p].nome}</strong>
+          <span class="pc ${pc === 100 ? 'cheio' : pc >= 50 ? 'meio' : pc === 0 ? 'zero' : ''}">${feitos}/${total}</span>
+        </div>
+        ${semRegistro ? `<p class="nada">${passado ? 'Não marcou nada neste dia.' : 'Ainda não abriu o checklist hoje.'}</p>` : ''}
+        ${(pend.length || notas.length) ? `<ul>
+          ${pend.map(x => `<li class="${passado ? 'atr' : ''}">◻ ${esc(x)}${passado ? ' — atrasada' : ''}</li>`).join('')}
+          ${notas.map(x => `<li><b>!</b> ${esc(x)}</li>`).join('')}</ul>` : ''}
+      </div>`;
+    }).join('');
+    if(!linhas.trim()) return '';
+    return `<div class="dia">
+      <div class="cab"><span class="qd">${bdl(dObj)} · ${DIAS[dObj.getDay()]}</span>
+      ${dt === HOJE ? '<span class="hojetag">hoje</span>' : ''}</div>
+      ${linhas}</div>`;
+  }).join('');
+
   modal(`<h3>Painel da gestão</h3>
-    <p class="sub2">${regs.length} registro${regs.length === 1 ? '' : 's'} neste aparelho.</p>
-    <div class="aviso">O histórico fica salvo no navegador deste computador. Para a gestão acompanhar de qualquer lugar, o próximo passo é ligar o app a um banco de dados.</div>
-    ${corpo}
-    <div style="margin-top:14px"><button class="btn secundario" style="width:100%" onclick="fecha()">Fechar</button></div>`);
+    <p class="sub2">Últimos ${datas.length} dias com tarefas previstas.</p>
+    <div class="aviso">Mostra o que foi marcado <b>neste computador</b>. O que a outra colaboradora marcar na máquina dela não aparece aqui até ligarmos o app a um banco de dados.</div>
+    ${blocos || '<p class="vazio">Nenhum dia com tarefas no período.</p>'}
+    <div style="display:flex;gap:9px;margin-top:14px">
+      <button class="btn secundario" style="flex:1" onclick="mostraGestao(${qtd + 8})">Ver mais dias</button>
+      <button class="btn secundario" style="flex:1" onclick="fecha()">Fechar</button></div>`);
 }
 
 /* ============================================================
