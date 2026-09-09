@@ -84,6 +84,8 @@ table.grade th{
 table.grade th.tarefa{text-align:left;padding-left:12px;width:38%}
 table.grade th.obs{width:19%;text-align:left;padding-left:12px}
 table.grade th.hj{background:var(--tinta);color:#fff}
+table.grade th.fer{background:var(--cinza);color:var(--musgo)}
+table.grade th .fnome{font-size:9px;letter-spacing:0;text-transform:none;font-weight:400;margin-top:1px;line-height:1.15}
 table.grade th small{display:block;font-size:11px;letter-spacing:.02em;margin-top:2px;text-transform:none}
 table.grade td{border:1px solid var(--linha);padding:0;vertical-align:middle}
 table.grade td.tarefa{padding:9px 12px;line-height:1.35}
@@ -160,9 +162,11 @@ td.obs textarea::placeholder{color:var(--musgo)}
 .modal h3{font-family:"Quicksand","Nunito",sans-serif;font-weight:600;font-size:21px;margin:0 0 4px}
 .modal .sub2{color:var(--musgo);font-size:13.5px;margin:0 0 16px}
 .modal pre{background:var(--papel);border:1px solid var(--linha);padding:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;white-space:pre-wrap;word-break:break-word;margin:0 0 14px;max-height:38vh;overflow:auto}
+.modal .btn{flex:none;width:100%}
 .modal input[type=password]{width:100%;border:1px solid var(--linha);padding:12px;font-size:16px;background:#fff;margin-bottom:12px}
 .erro{color:var(--brasa);font-size:13.5px;margin:0 0 12px}
-.vazio{color:var(--musgo);font-size:14px;padding:22px 0;text-align:center}
+.vazio{color:var(--musgo);font-size:14px;padding:34px 16px;text-align:center;line-height:1.7}
+.vazio b{font-family:"Quicksand","Nunito",sans-serif;font-size:21px;color:var(--tinta);display:block;margin-bottom:4px}
 .dia{border:1px solid var(--linha);margin-bottom:9px}
 .dia > .cab{display:flex;align-items:center;gap:10px;padding:11px 13px;background:#FAFBF9;border-bottom:1px solid var(--linha)}
 .dia .cab .qd{font-family:var(--rot);font-size:11.5px}
@@ -252,6 +256,50 @@ textarea.cmp{
 }
 .credito img{height:13px;width:auto;display:block}
 @media print{ .credito{display:flex;margin-top:20px;opacity:.6} }
+
+.seta{
+  flex:0 0 26px;height:26px;border-radius:50%;border:1px solid var(--linha);background:#fff;
+  color:var(--folha);font-size:17px;font-weight:700;line-height:1;
+  display:flex;align-items:center;justify-content:center;margin-top:1px;
+  transform:rotate(90deg);transition:transform .18s ease;
+}
+.seta.aberta{transform:rotate(270deg);background:var(--tinta);color:#fff;border-color:var(--tinta)}
+.item.aberto{border-color:#BCC9BE}
+.prog{
+  display:inline-block;font-size:11px;font-weight:700;letter-spacing:.04em;
+  border-radius:999px;padding:2px 9px;margin-left:8px;vertical-align:2px;
+  background:var(--papel);color:var(--musgo);border:1px solid var(--linha);
+}
+.prog.meio{background:#F6EFE2;color:#8A5A17;border-color:#E3CFAE}
+.prog.cheio{background:var(--okfundo);color:var(--ok);border-color:#BCD3C4}
+.barrinha{height:4px;border-radius:999px;background:var(--linha);margin-top:9px;max-width:230px;overflow:hidden}
+.barrinha i{display:block;height:100%;background:var(--ok);border-radius:999px;transition:width .2s}
+.subitem .idx{
+  flex:0 0 18px;text-align:right;font-size:11px;font-weight:700;color:var(--musgo);
+}
+.subitem{cursor:pointer}
+.subitem:hover{background:#F2F5F1}
+.subitem.feito:hover{background:#EFF5F0}
+
+.ajudinha{color:var(--musgo);font-size:13px;margin:-2px 0 11px;line-height:1.5}
+.item.extra .t{font-size:15px}
+.novoExtra{display:flex;gap:8px;margin-top:9px}
+.novoExtra input{
+  flex:1;border:1px dashed var(--musgo);border-radius:12px;padding:12px 14px;
+  font-size:14.5px;background:transparent;
+}
+.novoExtra input:focus{outline:none;border-style:solid;border-color:var(--folha);background:#fff}
+.mini.forte{background:var(--tinta);color:#fff;border-color:var(--tinta);padding:0 16px;font-size:11px}
+
+.setinha{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:21px;height:21px;border-radius:50%;border:1px solid var(--linha);background:#fff;
+  color:var(--folha);font-size:14px;font-weight:700;line-height:1;margin-right:8px;
+  transform:rotate(90deg);transition:transform .18s ease;vertical-align:-4px;
+}
+.setinha.aberta{transform:rotate(270deg);background:var(--tinta);color:#fff;border-color:var(--tinta)}
+table.grade tr.linhaSub td{padding:0;background:#FAFBF9}
+table.grade tr.linhaSub .sub{border-top:none;background:transparent}
 
 /* ---------- atraso ---------- */
 .cel.tarde{background:#FBF2E3;color:#8A5A17;font-weight:700}
@@ -351,19 +399,32 @@ const LOJAS = [
    quando: diario | seg | ter | d01 | d05 | d10 | d26 | ultimo | cont
    opc: pode ser marcada como não se aplica
    ============================================================ */
+/* i.lojas: true = as 10 lojas; array = só os índices listados */
+const listaLojas = i => i.lojas === true ? LOJAS.map((_,k) => k) : (Array.isArray(i.lojas) ? i.lojas : []);
+
 const ROTINAS = {
   jessica: {
     nome:'Jéssica', area:'Financeiro e departamento pessoal',
     itens:[
       {id:'j1', t:'Conferência de caixa', d:'10 lojas · 1h', quando:'diario', lojas:true,
        obs:'Registre a divergência de cada loja. Ex.: faltou R$ 10,00'},
+      {id:'j10', t:"Salvar NF's de saída", d:'10 lojas, uma a uma', quando:'diario', lojas:true,
+       campoLoja:'observação', obs:'Marque loja a loja conforme for salvando'},
+      {id:'jc7', t:'Manuseio do F360', quando:'diario'},
       {id:'j2', t:'Emissão de nota de saída', quando:'diario'},
       {id:'j3', t:'Emissão de boleto cliente', quando:'diario'},
       {id:'j4', t:'Admissão e demissão de novos colaboradores', quando:'diario', opc:true,
        d:'Marque não se aplica quando não houver movimentação',
-       sub:['Exame médico','Treinamento de normas e procedimentos','Entrega de uniforme','Folha de ponto',
-            'VT — se não quiser, declaração','VR — depois de 2 meses','Plano de saúde — depois de 2 meses',
-            'Plano odontológico — depois de 2 meses']},
+       sub:['Solicitar documentos',
+            'Exame médico',
+            'Enviar documentos e exames para a contabilidade',
+            'Recolher assinaturas e contrato',
+            'Folha de ponto',
+            'VT — se não quiser, declaração',
+            'Regimentos',
+            'VR — depois do contrato de experiência',
+            'Plano de saúde — depois do contrato de experiência',
+            'Plano odontológico — depois do contrato de experiência']},
       {id:'j5', t:'Conferência de depósito', d:'7 lojas', quando:'seg'},
       {id:'j6', t:'Conferência boletos distribuição', quando:'seg'},
       {id:'j7', t:'Recarga e verificação VT', quando:'d26', ajuste:'antes'},
@@ -375,13 +436,13 @@ const ROTINAS = {
       {id:'jc4', t:'Seguro de vida anual dos colaboradores', quando:'cont'},
       {id:'jc5', t:'Planilha com vencimento do certificado digital das lojas', quando:'cont'},
       {id:'jc6', t:'Planilha de recebimento de boletos', quando:'cont'},
-      {id:'jc7', t:'Manuseio do F360', quando:'cont'}
+      {id:'jc8', t:'Controle de uniforme', d:'A forma de controle precisa melhorar', quando:'cont'}
     ]
   },
   katiara: {
     nome:'Katiara', area:'Operação de lojas e suprimentos',
     itens:[
-      {id:'k1', t:'Acompanhar pedidos das lojas e realizar a entrada no sistema', quando:'diario'},
+      {id:'k1', t:'Acompanhar pedidos das lojas e realizar a entrada no sistema', quando:'diario', opc:true},
       {id:'k2', t:'Resolver demandas das lojas', quando:'diario'},
       {id:'k3', t:'Retorno das solicitações dos grupos de WhatsApp', quando:'diario'},
       {id:'k4', t:'Acompanhar campanhas, início e fim', d:'Paula manda a ideia, você formaliza', quando:'diario', opc:true},
@@ -390,29 +451,31 @@ const ROTINAS = {
       {id:'k7', t:'Conferir malote Linhares', d:'40 minutos', quando:'seg'},
       {id:'k8', t:'Dar baixa em produtos de uso da loja', d:'30 minutos', quando:'seg'},
       {id:'k9', t:'Pagar trocas de mercadorias', d:'1 hora', quando:'seg'},
-      {id:'k10', t:'Salvar as NFs de entrada', d:'30 minutos', quando:'seg', opc:true, selo:'não tem todo dia'},
       {id:'k11', t:'Emitir NF blogueira', d:'30 minutos', quando:'seg', opc:true},
       {id:'k12', t:'Arrumação e organização das lojas', d:'Através dos grupos', quando:'ter'},
       {id:'k13', t:'Fechamento mensal da folha de pagamento e envio da documentação para a contabilidade', quando:'d01'},
+      {id:'kc2', t:'Enviar lista de controle de validade', d:'Para a equipe das lojas', quando:'d01', prazo:'devolver até dia 08'},
+      {id:'k22', t:'Envio de documentos à contabilidade', quando:'d02'},
+      {id:'k23', t:'Envio do controle de validade para a Paula', quando:'d09'},
       {id:'k14', t:'Salvar NF de mídia', quando:'d05'},
       {id:'k15', t:'Enviar e-mail Avatim', quando:'d05'},
       {id:'k16', t:'Enviar e-mail solicitando produtos digital influencer', quando:'d05', opc:true, selo:'quando tiver'},
-      {id:'k17', t:'Pedidos de sacolas', d:'Com retorno de finalização no grupo', quando:'d10'},
+      {id:'k17', t:'Pedidos de sacolas', d:'Com retorno de finalização no grupo', quando:'d12'},
       {id:'k18', t:'Enviar mensagem nos grupos pedindo relação de avarias', d:'Todas as lojas, exceto as que tiverem menos de 5 itens', quando:'d10'},
-      {id:'k19', t:'Abrir chamados', quando:'d10', prazo:'finalizar até dia 15'},
+      {id:'k19', t:'Abrir chamados', d:'6 lojas, uma a uma', quando:'d10', prazo:'finalizar até dia 15',
+       lojas:[1,2,3,4,5,8], campoLoja:'nº do chamado', obs:'Registre o número do chamado de cada loja'},
       {id:'k20', t:'Emitir notas de troca', d:'Fechamento do mês', quando:'ultimo'},
       {id:'k21', t:'Pagar trocas', quando:'ultimo'},
-      {id:'kc1', t:'Controle de material', d:'Tags · fita · tira olfativa', quando:'cont', selo:'mensal'},
-      {id:'kc2', t:'Controle de validade', quando:'cont', selo:'mensal'},
-      {id:'kc3', t:'Controle de uniforme', d:'A forma de controle precisa melhorar', quando:'cont', selo:'avulsa'}
+      {id:'kc1', t:'Controle de material', d:'Tags · fita · tira olfativa', quando:'d07', ajuste:'antes'}
     ]
   }
 };
 
 const ROTULO = {diario:'Todo dia', seg:'Toda segunda-feira', ter:'Toda terça-feira',
-  d01:'Todo dia 01', d05:'Todo dia 05', d10:'Todo dia 10', d26:'Todo dia 26',
+  d01:'Todo dia 01', d02:'Todo dia 02', d05:'Todo dia 05', d07:'Todo dia 07', d09:'Todo dia 09', d10:'Todo dia 10',
+  d12:'Todo dia 12', d26:'Todo dia 26',
   ultimo:'Último dia do mês', cont:'Contínuas'};
-const ORDEM = ['diario','seg','ter','d01','d05','d10','d26','ultimo'];
+const ORDEM = ['diario','seg','ter','d01','d02','d05','d07','d09','d10','d12','d26','ultimo'];
 const MOTIVOS = [
   {id:'marcacao',   t:'Foi feito no prazo, só marquei depois', noPrazo:true},
   {id:'demanda',    t:'Volume de demanda no dia'},
@@ -423,7 +486,7 @@ const MOTIVOS = [
   {id:'outro',      t:'Outro'}
 ];
 const rotuloMotivo = id => (MOTIVOS.find(m => m.id === id) || {}).t || '';
-const MENSAIS = ['d01','d05','d10','d26','ultimo'];
+const MENSAIS = ['d01','d02','d05','d07','d09','d10','d12','d26','ultimo'];
 const DIAS = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
 const ABREV = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -441,6 +504,37 @@ const soma = (d,n) => { const x = new Date(d); x.setDate(x.getDate()+n); x.setHo
 const segundaDa = d => soma(d, d.getDay() === 0 ? -6 : 1 - d.getDay());
 
 const fimDeSemana = d => d.getDay() === 0 || d.getDay() === 6;
+
+/* ---------- feriados nacionais ---------- */
+function pascoa(ano){
+  const a = ano % 19, b = Math.floor(ano/100), c = ano % 100,
+        d = Math.floor(b/4), e = b % 4, f = Math.floor((b+8)/25),
+        g = Math.floor((b-f+1)/3), i = (19*a + b - d - g + 15) % 30,
+        k = Math.floor(c/4), l = c % 4, m = (32 + 2*e + 2*k - i - l) % 7,
+        n = Math.floor((a + 11*i + 22*m) / 451),
+        mes = Math.floor((i + m - 7*n + 114) / 31),
+        dia = ((i + m - 7*n + 114) % 31) + 1;
+  const x = new Date(ano, mes - 1, dia); x.setHours(12,0,0,0); return x;
+}
+const cacheFeriado = {};
+function feriadosDe(ano){
+  if(cacheFeriado[ano]) return cacheFeriado[ano];
+  const f = {};
+  const põe = (d, nome) => { f[kd(d)] = nome; };
+  [[0,1,'Confraternização Universal'], [3,21,'Tiradentes'], [4,1,'Dia do Trabalho'],
+   [8,7,'Independência'], [9,12,'Nossa Senhora Aparecida'], [10,2,'Finados'],
+   [10,15,'Proclamação da República'], [10,20,'Consciência Negra'], [11,25,'Natal']
+  ].forEach(([m,d,nome]) => { const x = new Date(ano, m, d); x.setHours(12,0,0,0); põe(x, nome); });
+  const pa = pascoa(ano);
+  põe(soma(pa,-48), 'Carnaval');
+  põe(soma(pa,-47), 'Carnaval');
+  põe(soma(pa,-2),  'Sexta-feira Santa');
+  põe(soma(pa,60),  'Corpus Christi');
+  cacheFeriado[ano] = f;
+  return f;
+}
+const ehFeriado = d => feriadosDe(d.getFullYear())[kd(d)] || null;
+const diaUtil = d => !fimDeSemana(d) && !ehFeriado(d);
 /* 'antes' antecipa para a sexta anterior, 'depois' empurra para a segunda seguinte.
    Antecipa quem precisa estar pronto até a data (vale-transporte, vale-refeição e
    o fechamento do último dia); o resto empurra. */
@@ -450,7 +544,7 @@ function ajusteDe(i){
 }
 function desloca(d, dir){
   let x = new Date(d), g = 0;
-  while(fimDeSemana(x) && g++ < 8) x = soma(x, dir);
+  while(!diaUtil(x) && g++ < 12) x = soma(x, dir);
   return x;
 }
 function dataPrevista(i, ref){
@@ -459,6 +553,7 @@ function dataPrevista(i, ref){
 }
 function venceEm(i, d){
   const q = i.quando, sem = d.getDay();
+  if(!diaUtil(d) && MENSAIS.indexOf(q) < 0) return false;
   if(q === 'diario') return sem >= 1 && sem <= 5;
   if(q === 'seg') return sem === 1;
   if(q === 'ter') return sem === 2;
@@ -479,8 +574,11 @@ function notaAjuste(i, d){
   if(ajusteDe(i) === 'antes'){ const x = new Date(d.getFullYear(), d.getMonth()+1, 1); x.setHours(12,0,0,0); refs.push(x); }
   for(const r of refs){
     const bruta = dataDoMes(i.quando, r), efet = dataPrevista(i, r);
-    if(efet && kd(efet) === kd(d) && kd(bruta) !== kd(efet))
-      return `${ajusteDe(i) === 'antes' ? 'antecipada' : 'adiada'}, ${nominal} caiu ${DIAS[bruta.getDay()] === 'sábado' ? 'no sábado' : 'no domingo'}`;
+    if(efet && kd(efet) === kd(d) && kd(bruta) !== kd(efet)){
+      const fer = ehFeriado(bruta);
+      const causa = fer ? `no feriado de ${fer}` : (bruta.getDay() === 6 ? 'no sábado' : 'no domingo');
+      return `${ajusteDe(i) === 'antes' ? 'antecipada' : 'adiada'}, ${nominal} caiu ${causa}`;
+    }
   }
   return '';
 }
@@ -495,7 +593,7 @@ function dataDoMes(q, ref){
    ============================================================ */
 const HOJE = kd(hoje);
 const SENHA = 'avatim2025';
-const VERSAO = '1.1';
+const VERSAO = '1.7';
 let pessoa = null, aba = 'hoje', cache = {};
 let refSemana = segundaDa(hoje), refMes = new Date(hoje);
 
@@ -545,7 +643,7 @@ function atrasoDias(dtPrev, emISO){
   if(!feito || feito <= dtPrev) return 0;
   let n = 0, d = soma(new Date(dtPrev + 'T12:00:00'), 1), g = 0;
   while(kd(d) <= feito && g++ < 400){
-    if(d.getDay() >= 1 && d.getDay() <= 5) n++;
+    if(diaUtil(d)) n++;
     d = soma(d, 1);
   }
   return n;
@@ -563,6 +661,28 @@ function grava(dt){ registraInicio(pessoa); Store.set(chave(pessoa,dt), JSON.str
 
 const doDia = (p,d) => ROTINAS[p].itens.filter(i => i.quando !== 'cont' && venceEm(i, d));
 const contInuas = p => ROTINAS[p].itens.filter(i => i.quando === 'cont');
+
+/* Atividades fora da rotina, lançadas pela própria colaboradora. */
+function extras(dt){
+  const d = dia(dt);
+  if(!Array.isArray(d.__extras)) d.__extras = [];
+  return d.__extras;
+}
+function addExtra(dt){
+  const el = document.getElementById('novoExtra');
+  const t = ((el || {}).value || '').trim();
+  if(!t) return;
+  extras(dt).push({t, ok:false, em:new Date().toISOString()});
+  grava(dt); render();
+  const novo = document.getElementById('novoExtra');
+  if(novo) novo.focus();
+}
+function alternaExtra(dt, n){ const l = extras(dt); if(l[n]){ l[n].ok = !l[n].ok; grava(dt); render(); } }
+function apagaExtra(dt, n, ev){
+  if(ev) ev.stopPropagation();
+  const l = extras(dt);
+  if(l[n] && confirm('Remover “' + l[n].t + '” da lista de hoje?')){ l.splice(n,1); grava(dt); render(); }
+}
 
 function progresso(){
   const l = doDia(pessoa, hoje), d = dia(HOJE);
@@ -637,38 +757,111 @@ function salvaMotivo(dt, id){
   grava(dt); fecha(); render();
 }
 function alterna(id){
-  const r = reg(HOJE,id);
+  const r = reg(HOJE,id), it = achaItem(id);
+  /* item marcado como não se aplica volta ao estado neutro */
+  if(r.st === 'na'){ r.st = null; carimba(r); grava(HOJE); render(); return; }
+  /* tarefa com lista dentro não fecha em silêncio: pergunta antes */
+  if(it.lojas || it.sub){ pedeMarcarTudo(HOJE, id); return; }
   r.st = r.st === 'ok' ? null : 'ok';
   carimba(r); grava(HOJE); render();
 }
+
+function contaSub(it, r){
+  const alvo = it.lojas ? listaLojas(it) : null;
+  const total = alvo ? alvo.length : it.sub.length;
+  const feitos = alvo ? alvo.filter(k => ((r.lojas||{})[k]||{}).ok).length
+                      : it.sub.filter((_,k) => (r.sub||{})[k]).length;
+  return { alvo, total, feitos, unid: alvo ? 'lojas' : 'etapas' };
+}
+function pedeMarcarTudo(dt, id){
+  const it = achaItem(id), r = reg(dt,id);
+  const { total, feitos, unid, alvo } = contaSub(it, r);
+
+  if(feitos === total && total > 0){
+    modal(`<h3>${esc(it.t)}</h3>
+      <p class="sub2">As ${total} ${unid} estão marcadas.</p>
+      <div style="display:flex;flex-direction:column;gap:9px">
+        <button class="btn principal" onclick="desmarcaTudo('${dt}','${id}')">Desmarcar tudo e reabrir a tarefa</button>
+        <button class="btn secundario" onclick="abrirLista('${dt}','${id}')">Só abrir a lista para conferir</button>
+        <button class="btn secundario" onclick="fecha()">Cancelar</button>
+      </div>`);
+    return;
+  }
+
+  const perda = alvo
+    ? `Marcando de uma vez, o campo de ${it.campoLoja || 'divergência'} de cada loja fica em branco — e é justamente ele que vira o relatório da gestão.`
+    : 'Marcando de uma vez, as etapas não ficam registradas uma a uma.';
+
+  modal(`<h3>${esc(it.t)}</h3>
+    <p class="sub2">${feitos} de ${total} ${unid} marcadas até agora.</p>
+    <div class="aviso">${perda}</div>
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <button class="btn principal" onclick="abrirLista('${dt}','${id}')">Abrir a lista e marcar uma a uma</button>
+      <button class="btn secundario" onclick="marcaTudo('${dt}','${id}')">Marcar as ${total} ${unid} de uma vez</button>
+      <button class="btn secundario" onclick="fecha()">Cancelar</button>
+    </div>`);
+}
+function abrirLista(dt, id){
+  const r = reg(dt,id); r.exp = true; grava(dt); fecha(); render();
+}
+function marcaTudo(dt, id){
+  const it = achaItem(id), r = reg(dt,id);
+  if(it.lojas) listaLojas(it).forEach(k => {
+    if(!r.lojas[k]) r.lojas[k] = {ok:false, div:''};
+    r.lojas[k].ok = true;
+  });
+  else it.sub.forEach((_,k) => { r.sub[k] = true; });
+  r.st = 'ok'; r.marcadoEmBloco = true;
+  carimba(r); grava(dt); fecha(); render();
+}
+function desmarcaTudo(dt, id){
+  const it = achaItem(id), r = reg(dt,id);
+  if(it.lojas) listaLojas(it).forEach(k => { if(r.lojas[k]) r.lojas[k].ok = false; });
+  else if(it.sub) it.sub.forEach((_,k) => { r.sub[k] = false; });
+  r.st = null; delete r.em; delete r.marcadoEmBloco;
+  grava(dt); fecha(); render();
+}
 function naoAplica(id, ev){ ev.stopPropagation(); const r = reg(HOJE,id); r.st = r.st === 'na' ? null : 'na'; carimba(r); grava(HOJE); render(); }
+function alternaExp(dt, id, ev){
+  if(ev) ev.stopPropagation();
+  const r = reg(dt,id);
+  r.exp = !r.exp;
+  grava(dt); render();
+}
 function abreObs(id, ev){ ev.stopPropagation(); const r = reg(HOJE,id); r.aberto = !r.aberto; grava(HOJE); render(); }
 function gravaObs(dt, id, v){ reg(dt,id).obs = v; grava(dt); }
 function gravaObsCel(dt, id, v, el){ reg(dt,id).obs = v; grava(dt); if(el) el.classList.toggle('tem', !!v.trim()); }
 function gravaObsSemana(dt, id, v, el){ reg(dt,id).obsSemana = v; grava(dt); if(el) el.classList.toggle('tem', !!v.trim()); }
 
-function alternaSub(id, k, ev){
-  ev.stopPropagation();
-  const r = reg(HOJE,id), it = achaItem(id);
+function alternaSub(dt, id, k, ev){
+  if(ev) ev.stopPropagation();
+  const r = reg(dt,id), it = achaItem(id);
   r.sub[k] = !r.sub[k];
-  const todas = it.sub.every((_,n) => r.sub[n]);
-  if(todas) r.st = 'ok'; else if(r.st === 'ok') r.st = null;
-  carimba(r); grava(HOJE); render();
+  fechaSeCompleta(dt, id, r, it.sub.every((_,n) => r.sub[n]));
 }
-function alternaLoja(id, k, ev){
-  ev.stopPropagation();
-  const r = reg(HOJE,id);
+function alternaLoja(dt, id, k, ev){
+  if(ev) ev.stopPropagation();
+  const r = reg(dt,id);
   if(!r.lojas[k]) r.lojas[k] = {ok:false, div:''};
   r.lojas[k].ok = !r.lojas[k].ok;
-  const todas = LOJAS.every((_,n) => (r.lojas[n]||{}).ok);
-  if(todas) r.st = 'ok'; else if(r.st === 'ok') r.st = null;
-  carimba(r); grava(HOJE); render();
+  fechaSeCompleta(dt, id, r, listaLojas(achaItem(id)).every(n => (r.lojas[n]||{}).ok));
 }
-function gravaDiv(id, k, v){
-  const r = reg(HOJE,id);
+/* Fecha a tarefa quando a última linha da sublista é marcada. Em dia anterior,
+   pede o motivo em vez de concluir em silêncio. */
+function fechaSeCompleta(dt, id, r, todas){
+  if(todas){
+    if(dt < HOJE && !r.motivo){ grava(dt); pedeMotivo(dt, id); return; }
+    r.st = 'ok';
+  } else if(r.st === 'ok'){
+    r.st = null; delete r.marcadoEmBloco; delete r.motivo; delete r.motivoTexto; delete r.noPrazo;
+  }
+  carimba(r); grava(dt); render();
+}
+function gravaDiv(dt, id, k, v){
+  const r = reg(dt,id);
   if(!r.lojas[k]) r.lojas[k] = {ok:false, div:''};
-  r.lojas[k].div = v; grava(HOJE);
-  const el = document.querySelector(`[data-div="${id}:${k}"]`);
+  r.lojas[k].div = v; grava(dt);
+  const el = document.querySelector(`[data-div="${dt}:${id}:${k}"]`);
   if(el) el.classList.toggle('tem', !!v.trim());
 }
 
@@ -699,8 +892,9 @@ function textoResumo(){
     const r = d[i.id] || {};
     L.push(`${r.st === 'ok' ? '[OK]' : r.st === 'na' ? '[N/A]' : '[  ]'} ${i.t}`);
     if(i.lojas){
-      const marc = Object.values(r.lojas||{}).filter(v => v.ok).length;
-      L.push(`      ${marc} de ${LOJAS.length} lojas conferidas`);
+      const alvo = listaLojas(i);
+      const marc = alvo.filter(k => ((r.lojas||{})[k]||{}).ok).length;
+      L.push(`      ${marc} de ${alvo.length} lojas${r.marcadoEmBloco ? ' (marcadas em bloco)' : ''}`);
       Object.entries(r.lojas||{}).forEach(([k,v]) => {
         if(v.div && v.div.trim()) L.push(`      ! ${LOJAS[k][0]} (${LOJAS[k][1]}): ${v.div.trim()}`);
       });
@@ -730,6 +924,11 @@ function textoResumo(){
   if(regular.length){
     L.push(''); L.push('— Regularizadas hoje —');
     regular.forEach(t => L.push(`[OK] ${t}`));
+  }
+  const ex = extras(HOJE);
+  if(ex.length){
+    L.push(''); L.push('— Atividades extras —');
+    ex.forEach(x => L.push(`${x.ok ? '[OK]' : '[  ]'} ${x.t}`));
   }
   const feitasCont = contInuas(pessoa).filter(i => (d[i.id]||{}).st === 'ok');
   if(feitasCont.length){
@@ -812,6 +1011,8 @@ function mostraGestao(qtd){
         if(x.obs && x.obs.trim()) notas.push(`${i.t}: ${x.obs.trim()}`);
         if(x.obsSemana && x.obsSemana.trim()) notas.push(`${i.t} (semana): ${x.obsSemana.trim()}`);
       });
+      (Array.isArray(r.__extras) ? r.__extras : []).forEach(x =>
+        notas.push(`extra: ${x.t}${x.ok ? '' : ' (não concluída)'}`));
       const pc = total ? Math.round(feitos/total*100) : 100;
       const semRegistro = !Object.keys(r).length;
       return `<div class="pl">
@@ -876,7 +1077,10 @@ function gradeSemana(){
   const dias = [0,1,2,3,4].map(n => soma(refSemana, n));
   const fim = dias[4];
   const linhas = ROTINAS[pessoa].itens.filter(i => ['diario','seg','ter'].indexOf(i.quando) >= 0);
-  const cabec = dias.map(d => `<th class="${kd(d) === HOJE ? 'hj' : ''}">${ABREV[d.getDay()]}<small>${bd(d)}</small></th>`).join('');
+  const cabec = dias.map(d => {
+    const fer = ehFeriado(d);
+    return `<th class="${kd(d) === HOJE ? 'hj' : ''}${fer ? ' fer' : ''}">${ABREV[d.getDay()]}<small>${bd(d)}</small>${fer ? `<small class="fnome">${fer}</small>` : ''}</th>`;
+  }).join('');
 
   const corpo = linhas.map((i,n) => {
     const cels = dias.map(d => {
@@ -890,8 +1094,9 @@ function gradeSemana(){
       if(dep) extra = `<span class="cont">+${dep}d</span>`;
       else if(r.noPrazo) extra = '<span class="cont">marcado depois</span>';
       else if(i.lojas){
-        const c = Object.values(r.lojas||{}).filter(v => v.ok).length;
-        if(c) extra = `<span class="cont">${c}/${LOJAS.length} lojas</span>`;
+        const alvo = listaLojas(i);
+        const c = alvo.filter(n => ((r.lojas||{})[n]||{}).ok).length;
+        if(c) extra = `<span class="cont">${c}/${alvo.length} lojas</span>`;
       }
       const dica = r.em ? ` title="Concluída em ${bdl(new Date(r.em))}${dep ? ', ' + seloAtraso(dep) : ', no prazo'}${r.motivo ? ' — ' + rotuloMotivo(r.motivo) + (r.motivoTexto ? ': ' + r.motivoTexto : '') : ''}"` : '';
       return `<td class="${dt === HOJE ? 'colhoje' : ''}">
@@ -946,12 +1151,18 @@ function tabelaMes(){
 
   const corpo = linhas.length ? linhas.map(({d,i,nota}) => {
     const dt = kd(d), r = dia(dt)[i.id] || {};
+    const alvoM = i.lojas ? listaLojas(i) : null;
+    const temSubM = !!(alvoM || i.sub) && r.st !== 'na';
+    let feitosM = 0, totalM = 0;
+    if(alvoM){ totalM = alvoM.length; feitosM = alvoM.filter(k => ((r.lojas||{})[k]||{}).ok).length; }
+    else if(i.sub){ totalM = i.sub.length; feitosM = i.sub.filter((_,k) => (r.sub||{})[k]).length; }
+    const abertoM = temSubM && r.exp;
     const passou = dt < HOJE;
     const atr = !r.st && passou && dt >= inicioDe(pessoa);
     const dep = (r.st === 'ok' && !r.noPrazo) ? atrasoDias(dt, r.em) : 0;
     return `<tr>
       <td class="tarefa" style="width:16%">${bdl(d)}<span class="dt">${DIAS[d.getDay()]}${nota ? '<br>' + nota : ''}</span></td>
-      <td class="tarefa">${i.t}${i.prazo ? `<span class="selo prazo">${i.prazo}</span>` : ''}
+      <td class="tarefa">${temSubM ? `<button class="setinha${abertoM ? ' aberta' : ''}" onclick="alternaExp('${dt}','${i.id}',event)">›</button>` : ''}${i.t}${i.prazo ? `<span class="selo prazo">${i.prazo}</span>` : ''}${temSubM ? `<span class="prog${feitosM === totalM ? ' cheio' : feitosM ? ' meio' : ''}">${feitosM}/${totalM}</span>` : ''}
         ${i.d ? `<span class="dt">${i.d}</span>` : ''}</td>
       <td style="width:15%" class="${dt === HOJE ? 'colhoje' : ''}">
         <span class="cel ${r.st === 'ok' ? (dep ? 'tarde' : 'ok') : r.st === 'na' ? 'na' : atr ? 'atr' : ''}"
@@ -960,7 +1171,8 @@ function tabelaMes(){
       <td class="obs" style="width:24%"><textarea rows="1" placeholder="—"
         class="${(r.obs||'').trim() ? 'tem' : ''}"
         oninput="gravaObsCel('${dt}','${i.id}',this.value,this); estica(this)"
-        >${esc(r.obs || '')}</textarea></td></tr>`;
+        >${esc(r.obs || '')}</textarea></td></tr>
+      ${abertoM ? `<tr class="linhaSub"><td colspan="4">${blocoSub(dt, i, r)}</td></tr>` : ''}`;
   }).join('') : '<tr><td class="tarefa" colspan="4" style="color:var(--musgo)">Nenhuma atividade com data fixa neste mês.</td></tr>';
 
   return `
@@ -980,38 +1192,66 @@ function tabelaMes(){
 /* ============================================================
    VISÃO: DIA
    ============================================================ */
+/* Lista de lojas ou de etapas de uma tarefa, em qualquer data. */
+function blocoSub(dt, i, r){
+  const alvo = i.lojas ? listaLojas(i) : null;
+  if(alvo){
+    return `<div class="sub">${alvo.map((k, n) => {
+      const L = LOJAS[k], lj = (r.lojas||{})[k] || {ok:false, div:''};
+      return `<div class="subitem${lj.ok ? ' feito' : ''}" onclick="alternaLoja('${dt}','${i.id}',${k},event)">
+        <span class="idx">${n + 1}</span>
+        <div class="subcheck">${lj.ok ? '✓' : ''}</div>
+        <div class="nome">${L[0]}<span class="cidade">${L[1]}</span></div>
+        <input class="div${lj.div ? ' tem' : ''}" data-div="${dt}:${i.id}:${k}" placeholder="${i.campoLoja || 'divergência'}"
+          value="${esc(lj.div)}" oninput="gravaDiv('${dt}','${i.id}',${k},this.value)" onclick="event.stopPropagation()"></div>`;
+    }).join('')}</div>`;
+  }
+  if(i.sub){
+    return `<div class="sub">${i.sub.map((s, k) => {
+      const f = (r.sub||{})[k];
+      return `<div class="subitem${f ? ' feito' : ''}" onclick="alternaSub('${dt}','${i.id}',${k},event)">
+        <span class="idx">${k + 1}</span>
+        <div class="subcheck">${f ? '✓' : ''}</div>
+        <div class="nome">${s}</div></div>`;
+    }).join('')}</div>`;
+  }
+  return '';
+}
+
 function linhaItem(i){
   const r = dia(HOJE)[i.id] || {};
   const nota = notaAjuste(i, hoje);
   const cls = r.st === 'ok' ? ' feito' : r.st === 'na' ? ' naa' : '';
   const mk = r.st === 'ok' ? '✓' : r.st === 'na' ? '–' : '';
-  let sub = '';
-  if(i.lojas && r.st !== 'na'){
-    sub = `<div class="sub">${LOJAS.map((L,k) => {
-      const lj = (r.lojas||{})[k] || {ok:false, div:''};
-      return `<div class="subitem${lj.ok ? ' feito' : ''}">
-        <div class="subcheck" onclick="alternaLoja('${i.id}',${k},event)">${lj.ok ? '✓' : ''}</div>
-        <div class="nome" onclick="alternaLoja('${i.id}',${k},event)">${L[0]}<span class="cidade">${L[1]}</span></div>
-        <input class="div${lj.div ? ' tem' : ''}" data-div="${i.id}:${k}" placeholder="divergência"
-          value="${esc(lj.div)}" oninput="gravaDiv('${i.id}',${k},this.value)" onclick="event.stopPropagation()"></div>`;
-    }).join('')}</div>`;
-  }
-  if(i.sub && r.st !== 'na'){
-    sub = `<div class="sub">${i.sub.map((s,k) => {
-      const f = (r.sub||{})[k];
-      return `<div class="subitem${f ? ' feito' : ''}" onclick="alternaSub('${i.id}',${k},event)">
-        <div class="subcheck">${f ? '✓' : ''}</div><div class="nome">${s}</div></div>`;
-    }).join('')}</div>`;
-  }
-  return `<div class="item${cls}">
-    <div class="linha" onclick="alterna('${i.id}')">
-      <div class="marca-box">${mk}</div>
-      <div class="txt"><div class="t">${i.t}${i.selo ? `<span class="selo">${i.selo}</span>` : ''}${i.prazo ? `<span class="selo prazo">${i.prazo}</span>` : ''}${nota ? `<span class="selo desloc">${nota}</span>` : ''}</div>
-        ${i.d ? `<div class="d">${i.d}</div>` : ''}</div>
+
+  /* --- itens com lista dentro: lojas ou etapas --- */
+  const alvo = i.lojas ? listaLojas(i) : null;
+  const temSub = !!(alvo || i.sub) && r.st !== 'na';
+  let feitos = 0, total = 0;
+  if(alvo){ total = alvo.length; feitos = alvo.filter(k => ((r.lojas||{})[k]||{}).ok).length; }
+  else if(i.sub){ total = i.sub.length; feitos = i.sub.filter((_,k) => (r.sub||{})[k]).length; }
+  const aberto = temSub && r.exp;
+
+  const sub = aberto ? blocoSub(HOJE, i, r) : '';
+
+  const progresso = temSub ? `
+    <span class="prog${feitos === total ? ' cheio' : feitos ? ' meio' : ''}">${feitos}/${total}</span>` : '';
+  const barra = temSub ? `<div class="barrinha"><i style="width:${total ? feitos/total*100 : 0}%"></i></div>` : '';
+
+  return `<div class="item${cls}${aberto ? ' aberto' : ''}">
+    <div class="linha" onclick="${temSub ? `alternaExp('${HOJE}','${i.id}')` : `alterna('${i.id}')`}">
+      <div class="marca-box" ${temSub ? `onclick="alterna('${i.id}');event.stopPropagation()"` : ''}>${mk}</div>
+      <div class="txt">
+        <div class="t">${i.t}${progresso}${i.selo ? `<span class="selo">${i.selo}</span>` : ''}${i.prazo ? `<span class="selo prazo">${i.prazo}</span>` : ''}${nota ? `<span class="selo desloc">${nota}</span>` : ''}</div>
+        ${i.d ? `<div class="d">${i.d}</div>` : ''}
+        ${barra}
+      </div>
       <div class="acoes">
         <button class="mini${r.aberto ? ' on' : ''}" onclick="abreObs('${i.id}',event)">Obs</button>
         ${i.opc ? `<button class="mini${r.st === 'na' ? ' on' : ''}" onclick="naoAplica('${i.id}',event)">N/A</button>` : ''}
-      </div></div>
+      </div>
+      ${temSub ? `<div class="seta${aberto ? ' aberta' : ''}">›</div>` : ''}
+    </div>
     ${sub}
     ${r.aberto ? `<div class="painel"><div class="dica">${i.obs || 'Observação'}</div>
       <textarea placeholder="O que aconteceu, o que ficou pendente…"
@@ -1020,14 +1260,39 @@ function linhaItem(i){
 }
 function listaHoje(){
   const itens = doDia(pessoa, hoje);
-  if(!itens.length) return '<p class="vazio">Nenhuma tarefa programada para hoje.</p>';
+  if(!itens.length){
+    const fer = ehFeriado(hoje);
+    if(fer) return `<p class="vazio"><b>${fer}</b><br>Feriado nacional. Nenhuma tarefa programada, e nada disso vira pendência.</p>`;
+    return '<p class="vazio">Nenhuma tarefa programada para hoje.</p>';
+  }
   return ORDEM.filter(q => itens.some(i => i.quando === q)).map(q =>
     `<div class="grupo"><h3>${ROTULO[q]}</h3>${itens.filter(i => i.quando === q).map(linhaItem).join('')}</div>`).join('');
 }
+function blocoExtras(){
+  const l = extras(HOJE), feitos = l.filter(x => x.ok).length;
+  return `<div class="grupo">
+    <h3>Atividades extras${l.length ? ` — ${feitos}/${l.length}` : ''}</h3>
+    <p class="ajudinha">Para registrar o que apareceu fora da rotina. Não entra na contagem do dia, mas vai no resumo e no painel da gestão.</p>
+    ${l.map((x, n) => `<div class="item extra${x.ok ? ' feito' : ''}">
+      <div class="linha" onclick="alternaExtra('${HOJE}',${n})">
+        <div class="marca-box">${x.ok ? '✓' : ''}</div>
+        <div class="txt"><div class="t">${esc(x.t)}</div></div>
+        <div class="acoes"><button class="mini" onclick="apagaExtra('${HOJE}',${n},event)">Remover</button></div>
+      </div></div>`).join('')}
+    <div class="novoExtra">
+      <input id="novoExtra" placeholder="Descreva a atividade e toque em Adicionar"
+             onkeydown="if(event.key==='Enter')addExtra('${HOJE}')">
+      <button class="mini forte" onclick="addExtra('${HOJE}')">Adicionar</button>
+    </div>
+  </div>`;
+}
+
 function listaCont(){
+  const itens = contInuas(pessoa);
+  if(!itens.length) return '<p class="vazio">Nenhum controle contínuo nesta lista.<br>Todas as rotinas têm data definida.</p>';
   return `<div class="grupo"><h3>Estruturação e controles</h3>
     <p style="color:var(--musgo);font-size:13.5px;margin:-2px 0 11px">Não entram na contagem do dia. Marque conforme forem sendo feitas.</p>
-    ${contInuas(pessoa).map(linhaItem).join('')}</div>`;
+    ${itens.map(linhaItem).join('')}</div>`;
 }
 
 /* ============================================================
