@@ -146,6 +146,13 @@ td.obs textarea::placeholder{color:var(--musgo)}
 .subitem .nome{flex:1;font-size:14.5px;line-height:1.3}
 .subitem.feito .nome{color:var(--folha)}
 .subitem .cidade{display:block;font-size:11.5px;color:var(--musgo)}
+.subitem .campos{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;flex:0 0 auto}
+.subitem input.div.larga{width:150px}
+@media (max-width:620px){
+  .subitem{flex-wrap:wrap}
+  .subitem .campos{width:100%;justify-content:stretch;padding-left:28px;margin-top:6px}
+  .subitem .campos input.div,.subitem input.div.larga{flex:1;width:auto;min-width:0}
+}
 .subitem input.div{width:110px;border:1px solid var(--linha);padding:6px 7px;font-family:var(--rot);font-size:12px;background:#fff}
 .subitem input.div.tem{border-color:var(--brasa);color:var(--brasa)}
 
@@ -301,6 +308,34 @@ textarea.cmp{
 table.grade tr.linhaSub td{padding:0;background:#FAFBF9}
 table.grade tr.linhaSub .sub{border-top:none;background:transparent}
 
+.pontoObs{display:block;width:6px;height:6px;border-radius:50%;background:var(--ambar);margin:3px auto 0}
+.sitLinha{margin:0 0 4px;display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.motivoLido{font-size:13px;color:var(--folha)}
+.modal h3 .prog{vertical-align:4px}
+.legenda .amostraPonto{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ambar);vertical-align:1px;margin-right:6px}
+
+.selo.ok{border-color:#BCD3C4;background:var(--okfundo);color:var(--ok)}
+.obsCont{
+  margin-top:7px;font-size:13px;color:var(--folha);background:var(--papel);
+  border-radius:9px;padding:7px 10px;line-height:1.45;
+}
+
+.subitem.marcado .nome{flex:1 1 150px}
+.marcador{
+  display:inline-flex;align-items:center;gap:5px;white-space:nowrap;
+  border:1px solid var(--linha);border-radius:999px;background:#fff;
+  padding:4px 9px 4px 5px;font-size:11px;font-weight:600;
+  letter-spacing:0;text-transform:none;color:var(--musgo);line-height:1.2;
+}
+.marcador .cx{
+  width:13px;height:13px;border-radius:4px;border:1.5px solid var(--musgo);background:#fff;
+  display:inline-flex;align-items:center;justify-content:center;font-size:9px;color:#fff;line-height:1;
+}
+.marcador.on{border-color:var(--ok);background:var(--okfundo);color:var(--ok)}
+.marcador.on .cx{background:var(--ok);border-color:var(--ok)}
+.marcador em{font-style:normal;font-weight:400;opacity:.7;font-size:10px;margin-left:1px}
+.marcador:hover{border-color:var(--folha)}
+
 /* ---------- atraso ---------- */
 .cel.tarde{background:#FBF2E3;color:#8A5A17;font-weight:700}
 .cel.tarde:hover{background:#F6EAD4}
@@ -410,13 +445,14 @@ const ROTINAS = {
        obs:'Registre a divergência de cada loja. Ex.: faltou R$ 10,00'},
       {id:'j10', t:"Salvar NF's de saída", d:'10 lojas, uma a uma', quando:'diario', lojas:true,
        campoLoja:'observação', obs:'Marque loja a loja conforme for salvando'},
-      {id:'jc7', t:'Manuseio do F360', quando:'diario'},
-      {id:'j2', t:'Emissão de nota de saída', quando:'diario'},
-      {id:'j3', t:'Emissão de boleto cliente', quando:'diario'},
+      {id:'jc7', t:'Rotina financeira no F360', d:'3 etapas', quando:'diario', opc:true,
+       sub:['Fechamento de caixa','Conciliação bancária','Nota Fiscal Eletrônica']},
+      {id:'j2', t:'Emissão de nota de saída', quando:'diario', opc:true},
+      {id:'j3', t:'Emissão de boleto cliente', quando:'diario', opc:true},
       {id:'j4', t:'Admissão e demissão de novos colaboradores', quando:'diario', opc:true,
        d:'Marque não se aplica quando não houver movimentação',
-       sub:['Solicitar documentos',
-            'Exame médico',
+       sub:['Exame médico',
+            'Solicitar documentos',
             'Enviar documentos e exames para a contabilidade',
             'Recolher assinaturas e contrato',
             'Folha de ponto',
@@ -425,8 +461,8 @@ const ROTINAS = {
             'VR — depois do contrato de experiência',
             'Plano de saúde — depois do contrato de experiência',
             'Plano odontológico — depois do contrato de experiência']},
-      {id:'j5', t:'Conferência de depósito', d:'7 lojas', quando:'seg'},
-      {id:'j6', t:'Conferência boletos distribuição', quando:'seg'},
+      {id:'j5', t:'Conferência de depósito', d:'7 lojas', quando:'seg', adiaFeriado:true},
+      {id:'j6', t:'Conferência boletos distribuição', quando:'seg', adiaFeriado:true},
       {id:'j7', t:'Recarga e verificação VT', quando:'d26', ajuste:'antes'},
       {id:'j8', t:'Faturas Patrus / Planilha Paula', quando:'d26'},
       {id:'j9', t:'Recarga e verificação VR', quando:'d01', ajuste:'antes'},
@@ -446,24 +482,30 @@ const ROTINAS = {
       {id:'k2', t:'Resolver demandas das lojas', quando:'diario'},
       {id:'k3', t:'Retorno das solicitações dos grupos de WhatsApp', quando:'diario'},
       {id:'k4', t:'Acompanhar campanhas, início e fim', d:'Paula manda a ideia, você formaliza', quando:'diario', opc:true},
-      {id:'k5', t:'Dar suporte por telefone', quando:'diario'},
-      {id:'k6', t:'Enviar mensagem nos grupos de informações, ciclos e comunicados', quando:'diario'},
-      {id:'k7', t:'Conferir malote Linhares', d:'40 minutos', quando:'seg'},
-      {id:'k8', t:'Dar baixa em produtos de uso da loja', d:'30 minutos', quando:'seg'},
-      {id:'k9', t:'Pagar trocas de mercadorias', d:'1 hora', quando:'seg'},
-      {id:'k11', t:'Emitir NF blogueira', d:'30 minutos', quando:'seg', opc:true},
-      {id:'k12', t:'Arrumação e organização das lojas', d:'Através dos grupos', quando:'ter'},
+      {id:'k6', t:'Enviar mensagem nos grupos de informações, ciclos e comunicados', quando:'diario', opc:true},
+      {id:'k7', t:'Conferir malote Linhares', d:'40 minutos', quando:'seg', adiaFeriado:true},
+      {id:'k8', t:'Dar baixa em produtos de uso da loja', d:'30 minutos', quando:'seg', adiaFeriado:true},
+      {id:'k9', t:'Pagar trocas de mercadorias', d:'1 hora', quando:'seg', adiaFeriado:true},
+      {id:'k11', t:'Emitir NF blogueira', d:'30 minutos', quando:'seg', opc:true, adiaFeriado:true},
+      {id:'k12', t:'Arrumação e organização das lojas', d:'10 lojas · através dos grupos', quando:'ter',
+       lojas:true, campoLoja:'situação', campoLoja2:'observação',
+       obs:'Quando houver ajuste, defina o prazo e cobre o retorno da loja finalizada'},
       {id:'k13', t:'Fechamento mensal da folha de pagamento e envio da documentação para a contabilidade', quando:'d01'},
-      {id:'kc2', t:'Enviar lista de controle de validade', d:'Para a equipe das lojas', quando:'d01', prazo:'devolver até dia 08'},
+      {id:'kc2', t:'Controle de validade', d:'10 lojas · aberta do dia 01 ao dia 08', quando:'d01',
+       janelaAte:8, prazo:'devolver até dia 08', lojas:true, marcas:true, campoLoja2:'observação',
+       obs:'Marque a solicitação e a devolução de cada loja; a data é registrada sozinha'},
       {id:'k22', t:'Envio de documentos à contabilidade', quando:'d02'},
       {id:'k23', t:'Envio do controle de validade para a Paula', quando:'d09'},
       {id:'k14', t:'Salvar NF de mídia', quando:'d05'},
-      {id:'k15', t:'Enviar e-mail Avatim', quando:'d05'},
-      {id:'k16', t:'Enviar e-mail solicitando produtos digital influencer', quando:'d05', opc:true, selo:'quando tiver'},
+      {id:'k15', t:'Enviar e-mail Avatim — mídia', d:'10 lojas, uma a uma', quando:'d05',
+       lojas:true, campoLoja:'observação'},
+      {id:'k16', t:'Enviar e-mail solicitando produtos digital influencer', d:'10 lojas, uma a uma',
+       quando:'d05', opc:true, selo:'quando tiver', lojas:true, campoLoja:'observação'},
       {id:'k17', t:'Pedidos de sacolas', d:'Com retorno de finalização no grupo', quando:'d12'},
       {id:'k18', t:'Enviar mensagem nos grupos pedindo relação de avarias', d:'Todas as lojas, exceto as que tiverem menos de 5 itens', quando:'d10'},
-      {id:'k19', t:'Abrir chamados', d:'6 lojas, uma a uma', quando:'d10', prazo:'finalizar até dia 15',
-       lojas:[1,2,3,4,5,8], campoLoja:'nº do chamado', obs:'Registre o número do chamado de cada loja'},
+      {id:'k19', t:'Abrir chamados — avaria', d:'6 lojas, uma a uma', quando:'d10', prazo:'finalizar até dia 15',
+       lojas:[1,2,3,4,5,8], campoLoja:'nº do chamado', campoLoja2:'observação',
+       obs:'Registre o número do chamado de cada loja'},
       {id:'k20', t:'Emitir notas de troca', d:'Fechamento do mês', quando:'ultimo'},
       {id:'k21', t:'Pagar trocas', quando:'ultimo'},
       {id:'kc1', t:'Controle de material', d:'Tags · fita · tira olfativa', quando:'d07', ajuste:'antes'}
@@ -551,12 +593,41 @@ function dataPrevista(i, ref){
   if(MENSAIS.indexOf(i.quando) < 0) return null;
   return desloca(dataDoMes(i.quando, ref), ajusteDe(i) === 'antes' ? -1 : 1);
 }
-function venceEm(i, d){
+/* Data-âncora do registro: tarefas com janela guardam tudo no dia de abertura,
+   mesmo quando aparecem nos dias seguintes. */
+function ancora(i, d){ return i.janelaAte ? kd(dataPrevista(i, d)) : kd(d); }
+function dataLimite(i, ref){
+  if(!i.janelaAte) return null;
+  const x = new Date(ref.getFullYear(), ref.getMonth(), i.janelaAte);
+  x.setHours(12,0,0,0);
+  return desloca(x, 1);
+}
+/* Data contra a qual o atraso é medido: numa tarefa com janela é o fim dela,
+   não o dia de abertura. */
+function dataCobranca(i, dt){
+  if(!i.janelaAte) return dt;
+  const ref = new Date(dt + 'T12:00:00');
+  return kd(dataLimite(i, ref));
+}
+function venceEm(i, d, p){
   const q = i.quando, sem = d.getDay();
+  if(i.janelaAte && MENSAIS.indexOf(q) >= 0){
+    if(!diaUtil(d)) return false;
+    const ini = dataPrevista(i, d), fim = dataLimite(i, d);
+    if(kd(d) < kd(ini) || kd(d) > kd(fim)) return false;
+    if(kd(d) === kd(ini)) return true;
+    const rec = (p ? leDia(p, kd(ini)) : dia(kd(ini)))[i.id] || {};
+    return rec.st !== 'ok' && rec.st !== 'na';   /* concluída sai da pendência */
+  }
   if(!diaUtil(d) && MENSAIS.indexOf(q) < 0) return false;
   if(q === 'diario') return sem >= 1 && sem <= 5;
-  if(q === 'seg') return sem === 1;
-  if(q === 'ter') return sem === 2;
+  if(q === 'seg' || q === 'ter'){
+    if(i.adiaFeriado){
+      const base = soma(segundaDa(d), q === 'ter' ? 1 : 0);
+      return kd(desloca(base, 1)) === kd(d);
+    }
+    return sem === (q === 'seg' ? 1 : 2);
+  }
   if(MENSAIS.indexOf(q) < 0) return false;
   const cand = [dataPrevista(i, d)];
   if(ajusteDe(i) === 'antes'){
@@ -568,6 +639,14 @@ function venceEm(i, d){
 }
 /* Quando a data efetiva difere da nominal, devolve o aviso para exibir. */
 function notaAjuste(i, d){
+  if((i.quando === 'seg' || i.quando === 'ter') && i.adiaFeriado){
+    const base = soma(segundaDa(d), i.quando === 'ter' ? 1 : 0);
+    if(kd(base) !== kd(d)){
+      const fer = ehFeriado(base);
+      return `adiada, ${i.quando === 'seg' ? 'a segunda' : 'a terça'} foi feriado${fer ? ' de ' + fer : ''}`;
+    }
+    return '';
+  }
   if(MENSAIS.indexOf(i.quando) < 0) return '';
   const nominal = i.quando === 'ultimo' ? 'o último dia' : 'o dia ' + i.quando.slice(1);
   const refs = [d];
@@ -593,7 +672,7 @@ function dataDoMes(q, ref){
    ============================================================ */
 const HOJE = kd(hoje);
 const SENHA = 'avatim2025';
-const VERSAO = '1.7';
+const VERSAO = '2.8';
 let pessoa = null, aba = 'hoje', cache = {};
 let refSemana = segundaDa(hoje), refMes = new Date(hoje);
 
@@ -621,7 +700,8 @@ function atrasadas(){
   while(kd(d) < HOJE && guarda++ < 90){
     const dt = kd(d), reg = dia(dt);
     doDia(pessoa, d).forEach(i => {
-      const r = reg[i.id] || {};
+      if(i.janelaAte && kd(dataLimite(i, d)) !== dt) return;   /* só cobra no fim da janela */
+      const r = (i.janelaAte ? dia(ancora(i, d)) : reg)[i.id] || {};
       if(r.st !== 'ok' && r.st !== 'na') fora.push({dt, dObj:new Date(d), i});
     });
     d = soma(d, 1);
@@ -649,6 +729,48 @@ function atrasoDias(dtPrev, emISO){
   return n;
 }
 function seloAtraso(n){ return n === 1 ? '1 dia depois' : n + ' dias depois'; }
+/* Contínuas não pertencem a um dia: ficam num registro próprio, com a data
+   em que foram concluídas e a observação. */
+let cacheCont = null;
+function contReg(){
+  if(!cacheCont){
+    try { cacheCont = JSON.parse(Store.get(`avatim-adm:cont:${pessoa}`)) || {}; } catch(e){ cacheCont = {}; }
+  }
+  return cacheCont;
+}
+function regCont(id){ const c = contReg(); if(!c[id]) c[id] = {st:null, obs:'', em:null}; return c[id]; }
+function gravaCont(){ Store.set(`avatim-adm:cont:${pessoa}`, JSON.stringify(contReg())); }
+function leCont(p){ try { return JSON.parse(Store.get(`avatim-adm:cont:${p}`)) || {}; } catch(e){ return {}; } }
+
+function concluiCont(id){
+  const r = regCont(id);
+  r.st = 'ok'; r.em = new Date().toISOString();
+  gravaCont(); render();
+}
+function reabreCont(id){
+  const r = regCont(id);
+  r.st = null; delete r.em;
+  gravaCont(); fecha(); render();
+}
+function abreObsCont(id, ev){
+  if(ev) ev.stopPropagation();
+  const r = regCont(id); r.aberto = !r.aberto; gravaCont(); render();
+}
+function gravaObsCont(id, v){ regCont(id).obs = v; gravaCont(); }
+function pedeCont(id){
+  const it = achaItem(id), r = regCont(id);
+  modal(`<h3>${esc(it.t)}</h3>
+    <p class="sub2">${r.em ? 'Concluída em ' + bdl(new Date(r.em)) + ', ' + DIAS[new Date(r.em).getDay()] : 'Sem data de conclusão'}</p>
+    <p class="sitLinha"><span class="cel ok" style="display:inline-block;width:auto;padding:6px 13px">Concluída</span></p>
+    <p class="rotcampo">Observação <span>fica registrada junto da tarefa</span></p>
+    <textarea class="cmp" placeholder="O que foi feito, o que ficou pendente"
+      oninput="gravaObsCont('${id}',this.value)">${esc(r.obs || '')}</textarea>
+    <div style="display:flex;flex-direction:column;gap:9px;margin-top:16px">
+      <button class="btn secundario" onclick="reabreCont('${id}')">Reabrir a tarefa</button>
+      <button class="btn secundario" onclick="fecha()">Fechar sem alterar</button>
+    </div>`);
+}
+
 function leDia(p, dt){
   try { return JSON.parse(Store.get(chave(p,dt))) || {}; } catch(e){ return {}; }
 }
@@ -659,7 +781,7 @@ function inicioLido(p){
 function reg(dt,id){ const d = dia(dt); if(!d[id]) d[id] = {st:null, obs:'', sub:{}, lojas:{}}; return d[id]; }
 function grava(dt){ registraInicio(pessoa); Store.set(chave(pessoa,dt), JSON.stringify(dia(dt))); }
 
-const doDia = (p,d) => ROTINAS[p].itens.filter(i => i.quando !== 'cont' && venceEm(i, d));
+const doDia = (p,d) => ROTINAS[p].itens.filter(i => i.quando !== 'cont' && venceEm(i, d, p));
 const contInuas = p => ROTINAS[p].itens.filter(i => i.quando === 'cont');
 
 /* Atividades fora da rotina, lançadas pela própria colaboradora. */
@@ -685,9 +807,10 @@ function apagaExtra(dt, n, ev){
 }
 
 function progresso(){
-  const l = doDia(pessoa, hoje), d = dia(HOJE);
-  const total = l.filter(i => (d[i.id]||{}).st !== 'na').length;
-  const feitos = l.filter(i => (d[i.id]||{}).st === 'ok').length;
+  const l = doDia(pessoa, hoje);
+  const est = i => (dia(ancora(i, hoje))[i.id] || {});
+  const total = l.filter(i => est(i).st !== 'na').length;
+  const feitos = l.filter(i => est(i).st === 'ok').length;
   return {feitos, total, pc: total ? Math.round(feitos/total*100) : 100};
 }
 
@@ -704,7 +827,7 @@ function cicla(dt, id, ev){
   if(ev) ev.stopPropagation();
   const r = reg(dt,id), it = achaItem(id);
   if(r.st === null){
-    if(dt < HOJE){ pedeMotivo(dt, id); return; }
+    if(dataCobranca(it, dt) < HOJE){ pedeMotivo(dt, id); return; }
     r.st = 'ok';
   }
   else if(r.st === 'ok') r.st = it.opc ? 'na' : null;
@@ -714,12 +837,82 @@ function cicla(dt, id, ev){
   grava(dt); render();
 }
 
+/* Clique na célula da semana abre o detalhe do dia em vez de alterar o status.
+   Assim dá para ler a observação de um dia anterior sem mexer em nada. */
+let celulaAberta = null;
+/* O quadro fica fora da área redesenhada pelo render(), então precisa
+   ser atualizado à parte quando a sublista muda. */
+function atualizaModal(dt, id, mudouStatus){
+  if(!celulaAberta || celulaAberta.dt !== dt || celulaAberta.id !== id) return;
+  if(mudouStatus){ pedeCelula(dt, id); return; }
+  const it = achaItem(id), r = reg(dt, id);
+  const cx = document.getElementById('subModal');
+  if(cx) cx.innerHTML = blocoSub(dt, it, r);
+  const pg = document.getElementById('progModal');
+  if(pg){
+    const alvo = it.lojas ? listaLojas(it) : null;
+    const total = alvo ? alvo.length : it.sub.length;
+    const feitos = alvo ? alvo.filter(k => { const x = (r.lojas||{})[k] || {}; return it.marcas ? !!x.rec : !!x.ok; }).length
+                        : it.sub.filter((_,k) => (r.sub||{})[k]).length;
+    pg.textContent = `${feitos}/${total}`;
+    pg.className = 'prog' + (feitos === total ? ' cheio' : feitos ? ' meio' : '');
+  }
+}
+
+function pedeCelula(dt, id, ev){
+  if(ev) ev.stopPropagation();
+  const it = achaItem(id), r = reg(dt, id);
+  const dObj = new Date(dt + 'T12:00:00');
+  const dep = (r.st === 'ok' && !r.noPrazo) ? atrasoDias(dataCobranca(it, dt), r.em) : 0;
+  const alvo = it.lojas ? listaLojas(it) : null;
+
+  let cont = '', lista = '';
+  if(alvo || it.sub){
+    const total = alvo ? alvo.length : it.sub.length;
+    const feitos = alvo ? alvo.filter(k => { const x = (r.lojas||{})[k] || {}; return it.marcas ? !!x.rec : !!x.ok; }).length
+                        : it.sub.filter((_,k) => (r.sub||{})[k]).length;
+    cont = `<span class="prog${feitos === total ? ' cheio' : feitos ? ' meio' : ''}" id="progModal">${feitos}/${total}</span>`;
+    lista = `<p class="rotcampo">${alvo ? 'Lojas' : 'Etapas'}</p>
+      <div class="item" style="margin:0" id="subModal">${blocoSub(dt, it, r)}</div>`;
+  }
+
+  const sit = r.st === 'ok' ? (dep ? `Concluída, ${seloAtraso(dep)}` : (r.noPrazo ? 'Concluída no prazo, marcada depois' : 'Concluída'))
+            : r.st === 'na' ? 'Não se aplica'
+            : (dataCobranca(it, dt) < HOJE ? 'Em aberto' : 'Pendente');
+  const clsSit = r.st === 'ok' ? (dep ? 'tarde' : 'ok') : r.st === 'na' ? 'na' : (dataCobranca(it, dt) < HOJE ? 'atr' : '');
+
+  const acoes = [];
+  if(r.st !== 'ok') acoes.push(`<button class="btn principal" onclick="defineStatus('${dt}','${id}','ok')">Marcar como concluída</button>`);
+  else acoes.push(`<button class="btn secundario" onclick="defineStatus('${dt}','${id}',null)">Reabrir a tarefa</button>`);
+  if(it.opc && r.st !== 'na') acoes.push(`<button class="btn secundario" onclick="defineStatus('${dt}','${id}','na')">Marcar não se aplica</button>`);
+  if(r.st === 'na') acoes.push(`<button class="btn secundario" onclick="defineStatus('${dt}','${id}',null)">Voltar para pendente</button>`);
+  acoes.push(`<button class="btn secundario" onclick="fecha()">Fechar sem alterar</button>`);
+
+  modal(`<h3>${esc(it.t)}${cont}</h3>
+    <p class="sub2">${bdl(dObj)}, ${DIAS[dObj.getDay()]}</p>
+    <p class="sitLinha"><span class="cel ${clsSit}" style="display:inline-block;width:auto;padding:6px 13px">${sit}</span>
+      ${r.motivo ? `<span class="motivoLido">${rotuloMotivo(r.motivo)}${r.motivoTexto ? ': ' + esc(r.motivoTexto) : ''}</span>` : ''}</p>
+    <p class="rotcampo">Observação deste dia <span>fica registrada e pode ser lida depois</span></p>
+    <textarea class="cmp" placeholder="O que aconteceu neste dia"
+      oninput="gravaObs('${dt}','${id}',this.value)">${esc(r.obs || '')}</textarea>
+    ${lista}
+    <div style="display:flex;flex-direction:column;gap:9px;margin-top:16px">${acoes.join('')}</div>`);
+  celulaAberta = { dt, id };
+}
+function defineStatus(dt, id, novo){
+  const r = reg(dt, id);
+  if(novo === 'ok' && dataCobranca(achaItem(id), dt) < HOJE && !r.motivo){ grava(dt); fecha(); pedeMotivo(dt, id); return; }
+  r.st = novo;
+  if(novo !== 'ok'){ delete r.motivo; delete r.motivoTexto; delete r.noPrazo; delete r.marcadoEmBloco; }
+  carimba(r); grava(dt); fecha(); render();
+}
+
 let escolhaMotivo = null;
 function pedeMotivo(dt, id, ev){
   if(ev) ev.stopPropagation();
   const it = achaItem(id), r = reg(dt, id);
   const dObj = new Date(dt + 'T12:00:00');
-  const dep = atrasoDias(dt, new Date().toISOString());
+  const dep = atrasoDias(dataCobranca(it, dt), new Date().toISOString());
   escolhaMotivo = r.motivo || null;
   modal(`<h3>Conclusão em atraso</h3>
     <p class="sub2">${esc(it.t)}<br>Previsto para ${bdl(dObj)}, ${DIAS[dObj.getDay()]}${dep ? ` · ${seloAtraso(dep)}` : ''}</p>
@@ -757,19 +950,19 @@ function salvaMotivo(dt, id){
   grava(dt); fecha(); render();
 }
 function alterna(id){
-  const r = reg(HOJE,id), it = achaItem(id);
+  const it = achaItem(id), HOJE_A = ancora(it, hoje), r = reg(HOJE_A, id);
   /* item marcado como não se aplica volta ao estado neutro */
-  if(r.st === 'na'){ r.st = null; carimba(r); grava(HOJE); render(); return; }
+  if(r.st === 'na'){ r.st = null; carimba(r); grava(HOJE_A); render(); return; }
   /* tarefa com lista dentro não fecha em silêncio: pergunta antes */
-  if(it.lojas || it.sub){ pedeMarcarTudo(HOJE, id); return; }
+  if(it.lojas || it.sub){ pedeMarcarTudo(HOJE_A, id); return; }
   r.st = r.st === 'ok' ? null : 'ok';
-  carimba(r); grava(HOJE); render();
+  carimba(r); grava(HOJE_A); render();
 }
 
 function contaSub(it, r){
   const alvo = it.lojas ? listaLojas(it) : null;
   const total = alvo ? alvo.length : it.sub.length;
-  const feitos = alvo ? alvo.filter(k => ((r.lojas||{})[k]||{}).ok).length
+  const feitos = alvo ? alvo.filter(k => { const x = (r.lojas||{})[k] || {}; return it.marcas ? !!x.rec : !!x.ok; }).length
                       : it.sub.filter((_,k) => (r.sub||{})[k]).length;
   return { alvo, total, feitos, unid: alvo ? 'lojas' : 'etapas' };
 }
@@ -809,6 +1002,11 @@ function marcaTudo(dt, id){
   if(it.lojas) listaLojas(it).forEach(k => {
     if(!r.lojas[k]) r.lojas[k] = {ok:false, div:''};
     r.lojas[k].ok = true;
+    if(it.marcas){
+      const agora = new Date().toISOString();
+      if(!r.lojas[k].sol){ r.lojas[k].sol = true; r.lojas[k].solEm = agora; }
+      if(!r.lojas[k].rec){ r.lojas[k].rec = true; r.lojas[k].recEm = agora; }
+    }
   });
   else it.sub.forEach((_,k) => { r.sub[k] = true; });
   r.st = 'ok'; r.marcadoEmBloco = true;
@@ -816,19 +1014,22 @@ function marcaTudo(dt, id){
 }
 function desmarcaTudo(dt, id){
   const it = achaItem(id), r = reg(dt,id);
-  if(it.lojas) listaLojas(it).forEach(k => { if(r.lojas[k]) r.lojas[k].ok = false; });
+  if(it.lojas) listaLojas(it).forEach(k => {
+    const x = r.lojas[k];
+    if(x){ x.ok = false; if(it.marcas){ x.sol = false; x.rec = false; delete x.solEm; delete x.recEm; } }
+  });
   else if(it.sub) it.sub.forEach((_,k) => { r.sub[k] = false; });
   r.st = null; delete r.em; delete r.marcadoEmBloco;
   grava(dt); fecha(); render();
 }
-function naoAplica(id, ev){ ev.stopPropagation(); const r = reg(HOJE,id); r.st = r.st === 'na' ? null : 'na'; carimba(r); grava(HOJE); render(); }
+function naoAplica(id, ev){ ev.stopPropagation(); const A = ancora(achaItem(id), hoje); const r = reg(A,id); r.st = r.st === 'na' ? null : 'na'; carimba(r); grava(A); render(); }
 function alternaExp(dt, id, ev){
   if(ev) ev.stopPropagation();
   const r = reg(dt,id);
   r.exp = !r.exp;
   grava(dt); render();
 }
-function abreObs(id, ev){ ev.stopPropagation(); const r = reg(HOJE,id); r.aberto = !r.aberto; grava(HOJE); render(); }
+function abreObs(id, ev){ ev.stopPropagation(); const A = ancora(achaItem(id), hoje); const r = reg(A,id); r.aberto = !r.aberto; grava(A); render(); }
 function gravaObs(dt, id, v){ reg(dt,id).obs = v; grava(dt); }
 function gravaObsCel(dt, id, v, el){ reg(dt,id).obs = v; grava(dt); if(el) el.classList.toggle('tem', !!v.trim()); }
 function gravaObsSemana(dt, id, v, el){ reg(dt,id).obsSemana = v; grava(dt); if(el) el.classList.toggle('tem', !!v.trim()); }
@@ -838,6 +1039,20 @@ function alternaSub(dt, id, k, ev){
   const r = reg(dt,id), it = achaItem(id);
   r.sub[k] = !r.sub[k];
   fechaSeCompleta(dt, id, r, it.sub.every((_,n) => r.sub[n]));
+}
+/* Marcação dupla por loja: a data é carimbada sozinha. A tarefa fecha
+   quando todas as lojas tiverem devolvido. */
+function alternaMarca(dt, id, k, qual, ev){
+  if(ev) ev.stopPropagation();
+  const it = achaItem(id), r = reg(dt, id);
+  if(!r.lojas[k]) r.lojas[k] = {};
+  const lj = r.lojas[k];
+  lj[qual] = !lj[qual];
+  if(lj[qual]) lj[qual + 'Em'] = new Date().toISOString();
+  else delete lj[qual + 'Em'];
+  if(qual === 'rec' && lj.rec && !lj.sol){ lj.sol = true; lj.solEm = lj.solEm || new Date().toISOString(); }
+  lj.ok = !!lj.rec;
+  fechaSeCompleta(dt, id, r, listaLojas(it).every(n => ((r.lojas[n]||{}).rec)));
 }
 function alternaLoja(dt, id, k, ev){
   if(ev) ev.stopPropagation();
@@ -849,24 +1064,39 @@ function alternaLoja(dt, id, k, ev){
 /* Fecha a tarefa quando a última linha da sublista é marcada. Em dia anterior,
    pede o motivo em vez de concluir em silêncio. */
 function fechaSeCompleta(dt, id, r, todas){
+  const antes = r.st, cob = dataCobranca(achaItem(id), dt);
   if(todas){
-    if(dt < HOJE && !r.motivo){ grava(dt); pedeMotivo(dt, id); return; }
+    if(cob < HOJE && !r.motivo){ grava(dt); pedeMotivo(dt, id); return; }
     r.st = 'ok';
   } else if(r.st === 'ok'){
     r.st = null; delete r.marcadoEmBloco; delete r.motivo; delete r.motivoTexto; delete r.noPrazo;
   }
   carimba(r); grava(dt); render();
+  atualizaModal(dt, id, r.st !== antes);
+}
+function gravaObsLoja(dt, id, k, v){
+  const r = reg(dt,id);
+  if(!r.lojas[k]) r.lojas[k] = {ok:false, div:''};
+  r.lojas[k].obs = v; grava(dt);
+  const els = document.querySelectorAll(`[data-obs="${dt}:${id}:${k}"]`);
+  for(let n = 0; n < els.length; n++){
+    els[n].classList.toggle('tem', !!v.trim());
+    if(els[n].value !== v) els[n].value = v;
+  }
 }
 function gravaDiv(dt, id, k, v){
   const r = reg(dt,id);
   if(!r.lojas[k]) r.lojas[k] = {ok:false, div:''};
   r.lojas[k].div = v; grava(dt);
-  const el = document.querySelector(`[data-div="${dt}:${id}:${k}"]`);
-  if(el) el.classList.toggle('tem', !!v.trim());
+  const els = document.querySelectorAll(`[data-div="${dt}:${id}:${k}"]`);
+  for(let n = 0; n < els.length; n++){
+    els[n].classList.toggle('tem', !!v.trim());
+    if(els[n].value !== v) els[n].value = v;
+  }
 }
 
-function escolhe(p){ pessoa = p; aba = 'hoje'; cache = {}; refSemana = segundaDa(hoje); refMes = new Date(hoje); render(); }
-function voltar(){ pessoa = null; render(); }
+function escolhe(p){ pessoa = p; aba = 'hoje'; cache = {}; cacheCont = null; refSemana = segundaDa(hoje); refMes = new Date(hoje); render(); }
+function voltar(){ pessoa = null; cacheCont = null; render(); }
 function trocaAba(a){ aba = a; render(); }
 function andaSemana(n){ refSemana = soma(refSemana, n*7); render(); }
 function semanaAtual(){ refSemana = segundaDa(hoje); render(); }
@@ -889,14 +1119,23 @@ function textoResumo(){
   let ult = null;
   doDia(pessoa, hoje).forEach(i => {
     if(i.quando !== ult){ L.push(`— ${ROTULO[i.quando]} —`); ult = i.quando; }
-    const r = d[i.id] || {};
+    const r = dia(ancora(i, hoje))[i.id] || {};
     L.push(`${r.st === 'ok' ? '[OK]' : r.st === 'na' ? '[N/A]' : '[  ]'} ${i.t}`);
     if(i.lojas){
       const alvo = listaLojas(i);
-      const marc = alvo.filter(k => ((r.lojas||{})[k]||{}).ok).length;
-      L.push(`      ${marc} de ${alvo.length} lojas${r.marcadoEmBloco ? ' (marcadas em bloco)' : ''}`);
+      if(i.marcas){
+        const sol = alvo.filter(k => ((r.lojas||{})[k]||{}).sol).length;
+        const rec = alvo.filter(k => ((r.lojas||{})[k]||{}).rec).length;
+        L.push(`      solicitada a ${sol} de ${alvo.length} lojas · devolvida por ${rec}`);
+      } else {
+        const marc = alvo.filter(k => ((r.lojas||{})[k]||{}).ok).length;
+        L.push(`      ${marc} de ${alvo.length} lojas${r.marcadoEmBloco ? ' (marcadas em bloco)' : ''}`);
+      }
       Object.entries(r.lojas||{}).forEach(([k,v]) => {
-        if(v.div && v.div.trim()) L.push(`      ! ${LOJAS[k][0]} (${LOJAS[k][1]}): ${v.div.trim()}`);
+        const partes = [];
+        if(v.div && v.div.trim()) partes.push(v.div.trim());
+        if(v.obs && v.obs.trim()) partes.push(v.obs.trim());
+        if(partes.length) L.push(`      ! ${LOJAS[k][0]} (${LOJAS[k][1]}): ${partes.join(' — ')}`);
       });
     }
     if(i.sub && r.st !== 'na'){
@@ -913,9 +1152,11 @@ function textoResumo(){
     while(kd(x) < HOJE && g++ < 90){
       const dtx = kd(x), rx = dia(dtx);
       doDia(pessoa, x).forEach(i => {
+        if(i.janelaAte && dtx !== ancora(i, x)) return;   /* conta uma vez só */
         const y = rx[i.id] || {};
+        const cob = dataCobranca(i, dtx);
         if(y.st === 'ok' && y.em && kd(new Date(y.em)) === HOJE)
-          regular.push(`${i.t} (previsto ${bd(x)}, ${y.noPrazo ? 'feita no prazo, marcada depois' : seloAtraso(atrasoDias(dtx, y.em))})`
+          regular.push(`${i.t} (${i.janelaAte ? 'prazo era' : 'previsto'} ${bd(new Date(cob + 'T12:00:00'))}, ${y.noPrazo ? 'feita no prazo, marcada depois' : seloAtraso(atrasoDias(cob, y.em))})`
             + (y.motivo && !y.noPrazo ? `\n      motivo: ${rotuloMotivo(y.motivo)}${y.motivoTexto ? ' — ' + y.motivoTexto : ''}` : ''));
       });
       x = soma(x, 1);
@@ -930,10 +1171,17 @@ function textoResumo(){
     L.push(''); L.push('— Atividades extras —');
     ex.forEach(x => L.push(`${x.ok ? '[OK]' : '[  ]'} ${x.t}`));
   }
-  const feitasCont = contInuas(pessoa).filter(i => (d[i.id]||{}).st === 'ok');
+  const c = contReg();
+  const feitasCont = contInuas(pessoa).filter(i => {
+    const x = c[i.id] || {};
+    return x.st === 'ok' && x.em && kd(new Date(x.em)) === HOJE;
+  });
   if(feitasCont.length){
     L.push(''); L.push('— Contínuas concluídas hoje —');
-    feitasCont.forEach(i => L.push(`[OK] ${i.t}`));
+    feitasCont.forEach(i => {
+      const x = c[i.id] || {};
+      L.push(`[OK] ${i.t}${x.obs && x.obs.trim() ? `\n      obs: ${x.obs.trim()}` : ''}`);
+    });
   }
   return L.join('\n');
 }
@@ -995,24 +1243,34 @@ function mostraGestao(qtd){
       const lista = doDia(p, dObj);
       if(!lista.length) return '';
       const r = leDia(p, dt);
-      const total = lista.filter(i => (r[i.id]||{}).st !== 'na').length;
-      const feitos = lista.filter(i => (r[i.id]||{}).st === 'ok').length;
-      const pend = lista.filter(i => !(r[i.id]||{}).st).map(i => i.t);
+      const est = i => (i.janelaAte ? leDia(p, ancora(i, dObj)) : r)[i.id] || {};
+      const total = lista.filter(i => est(i).st !== 'na').length;
+      const feitos = lista.filter(i => est(i).st === 'ok').length;
+      const pend = lista.filter(i => !est(i).st).map(i => i.t);
       const tarde = [];
       const notas = [];
       lista.forEach(i => {
-        const x = r[i.id] || {};
-        const dep = (x.st === 'ok' && !x.noPrazo) ? atrasoDias(dt, x.em) : 0;
+        const x = est(i);
+        const dep = (x.st === 'ok' && !x.noPrazo) ? atrasoDias(dataCobranca(i, dt), x.em) : 0;
         if(dep) tarde.push(`${i.t} — concluída ${seloAtraso(dep)}. ${x.motivo ? rotuloMotivo(x.motivo) : 'Sem motivo informado'}${x.motivoTexto ? ': ' + x.motivoTexto : ''}`);
         else if(x.noPrazo) tarde.push(`${i.t} — feita no prazo, marcada depois`);
         Object.entries(x.lojas||{}).forEach(([n,v]) => {
-          if(v.div && v.div.trim()) notas.push(`${LOJAS[n][0]} (${LOJAS[n][1]}): ${v.div.trim()}`);
+          const partes = [];
+          if(v.div && v.div.trim()) partes.push(v.div.trim());
+          if(v.obs && v.obs.trim()) partes.push(v.obs.trim());
+          if(partes.length) notas.push(`${LOJAS[n][0]} (${LOJAS[n][1]}): ${partes.join(' — ')}`);
         });
         if(x.obs && x.obs.trim()) notas.push(`${i.t}: ${x.obs.trim()}`);
         if(x.obsSemana && x.obsSemana.trim()) notas.push(`${i.t} (semana): ${x.obsSemana.trim()}`);
       });
       (Array.isArray(r.__extras) ? r.__extras : []).forEach(x =>
         notas.push(`extra: ${x.t}${x.ok ? '' : ' (não concluída)'}`));
+      const cont = leCont(p);
+      ROTINAS[p].itens.filter(x => x.quando === 'cont').forEach(x => {
+        const y = cont[x.id] || {};
+        if(y.st === 'ok' && y.em && kd(new Date(y.em)) === dt)
+          notas.push(`contínua concluída: ${x.t}${y.obs && y.obs.trim() ? ' — ' + y.obs.trim() : ''}`);
+      });
       const pc = total ? Math.round(feitos/total*100) : 100;
       const semRegistro = !Object.keys(r).length;
       return `<div class="pl">
@@ -1041,7 +1299,7 @@ function mostraGestao(qtd){
       const r = leDia(p, dt);
       doDia(p, dObj).forEach(i => {
         const x = r[i.id] || {};
-        if(x.st === 'ok' && !x.noPrazo && atrasoDias(dt, x.em)) forasDoPrazo++;
+        if(x.st === 'ok' && !x.noPrazo && atrasoDias(dataCobranca(i, dt), x.em)) forasDoPrazo++;
       });
     });
   });
@@ -1067,7 +1325,7 @@ function modal(html){
   d.addEventListener('click', e => { if(e.target === d) fecha(); });
   document.body.appendChild(d);
 }
-function fecha(){ const m = document.querySelector('.modal'); if(m) m.remove(); }
+function fecha(){ const m = document.querySelector('.modal'); if(m) m.remove(); celulaAberta = null; }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 /* ============================================================
@@ -1084,7 +1342,7 @@ function gradeSemana(){
 
   const corpo = linhas.map((i,n) => {
     const cels = dias.map(d => {
-      const dt = kd(d), aplica = venceEm(i, d);
+      const dt = kd(d), aplica = venceEm(i, d, pessoa);
       if(!aplica) return '<td class="vaz"></td>';
       const r = dia(dt)[i.id] || {};
       const atr = !r.st && dt < HOJE && dt >= inicioDe(pessoa);
@@ -1098,10 +1356,11 @@ function gradeSemana(){
         const c = alvo.filter(n => ((r.lojas||{})[n]||{}).ok).length;
         if(c) extra = `<span class="cont">${c}/${alvo.length} lojas</span>`;
       }
-      const dica = r.em ? ` title="Concluída em ${bdl(new Date(r.em))}${dep ? ', ' + seloAtraso(dep) : ', no prazo'}${r.motivo ? ' — ' + rotuloMotivo(r.motivo) + (r.motivoTexto ? ': ' + r.motivoTexto : '') : ''}"` : '';
+      const temObs = !!(r.obs && r.obs.trim());
+      const dica = ` title="Toque para ver o detalhe do dia${temObs ? ' — há observação registrada' : ''}"`;
       return `<td class="${dt === HOJE ? 'colhoje' : ''}">
         <span class="cel ${r.st === 'ok' ? (dep ? 'tarde' : 'ok') : r.st === 'na' ? 'na' : atr ? 'atr' : ''}"${dica}
-              onclick="cicla('${dt}','${i.id}',event)">${marca || '·'}${extra}</span></td>`;
+              onclick="pedeCelula('${dt}','${i.id}',event)">${marca || '·'}${extra}${temObs ? '<span class="pontoObs"></span>' : ''}</span></td>`;
     }).join('');
     const rObs = dia(kd(refSemana))[i.id] || {};
     const txtSem = rObs.obsSemana || '';
@@ -1127,7 +1386,8 @@ function gradeSemana(){
     <tbody>${corpo}</tbody>
   </table></div>
   <p class="legenda">
-    <i>Clique na célula para marcar</i>
+    <i>Clique na célula para ver o detalhe do dia</i>
+    <span><span class="amostraPonto"></span>tem observação registrada</span>
     <span><i>Concluído</i> = feito</span>
     <span><i>N/A</i> = não se aplica</span>
     <span><span class="amostra"></span>não previsto para o dia</span>
@@ -1166,8 +1426,8 @@ function tabelaMes(){
         ${i.d ? `<span class="dt">${i.d}</span>` : ''}</td>
       <td style="width:15%" class="${dt === HOJE ? 'colhoje' : ''}">
         <span class="cel ${r.st === 'ok' ? (dep ? 'tarde' : 'ok') : r.st === 'na' ? 'na' : atr ? 'atr' : ''}"
-              ${r.em ? `title="Concluída em ${bdl(new Date(r.em))}"` : ''}
-              onclick="cicla('${dt}','${i.id}',event)">${r.st === 'ok' ? 'Concluído' : r.st === 'na' ? 'N/A' : atr ? 'Atrasada' : (passou ? 'em aberto' : '·')}${dep ? `<span class="cont">${seloAtraso(dep)}</span>` : ''}</span></td>
+              title="Toque para ver o detalhe do dia${r.em ? ' — concluída em ' + bdl(new Date(r.em)) : ''}"
+              onclick="pedeCelula('${dt}','${i.id}',event)">${r.st === 'ok' ? 'Concluído' : r.st === 'na' ? 'N/A' : atr ? 'Atrasada' : (passou ? 'em aberto' : '·')}${dep ? `<span class="cont">${seloAtraso(dep)}</span>` : ''}</span></td>
       <td class="obs" style="width:24%"><textarea rows="1" placeholder="—"
         class="${(r.obs||'').trim() ? 'tem' : ''}"
         oninput="gravaObsCel('${dt}','${i.id}',this.value,this); estica(this)"
@@ -1186,7 +1446,10 @@ function tabelaMes(){
     <thead><tr><th class="tarefa">Data</th><th class="tarefa">Atividade</th><th>Situação</th><th class="obs">Observações</th></tr></thead>
     <tbody>${corpo}</tbody>
   </table></div>
-  <p class="legenda"><i>Clique na coluna Situação para marcar</i></p>`;
+  <p class="legenda">
+    <i>Clique na coluna Situação para ver o detalhe do dia</i>
+    <span>A seta ao lado do nome abre a lista de lojas sem sair da tabela</span>
+  </p>`;
 }
 
 /* ============================================================
@@ -1195,6 +1458,24 @@ function tabelaMes(){
 /* Lista de lojas ou de etapas de uma tarefa, em qualquer data. */
 function blocoSub(dt, i, r){
   const alvo = i.lojas ? listaLojas(i) : null;
+  if(alvo && i.marcas){
+    return `<div class="sub">${alvo.map((k, n) => {
+      const L = LOJAS[k], lj = (r.lojas||{})[k] || {};
+      const bt = (qual, rot) => {
+        const on = !!lj[qual], quando = lj[qual + 'Em'];
+        return `<button class="marcador${on ? ' on' : ''}" onclick="alternaMarca('${dt}','${i.id}',${k},'${qual}',event)">
+          <span class="cx">${on ? '✓' : ''}</span>${rot}${on && quando ? `<em>${bd(new Date(quando))}</em>` : ''}</button>`;
+      };
+      return `<div class="subitem marcado${lj.rec ? ' feito' : ''}">
+        <span class="idx">${n + 1}</span>
+        <div class="nome">${L[0]}<span class="cidade">${L[1]}</span></div>
+        <div class="campos" onclick="event.stopPropagation()">
+          ${bt('sol','solicitada')}${bt('rec','recebida')}
+          <input class="div larga${lj.obs ? ' tem' : ''}" data-obs="${dt}:${i.id}:${k}" placeholder="${i.campoLoja2 || 'observação'}"
+            value="${esc(lj.obs || '')}" oninput="gravaObsLoja('${dt}','${i.id}',${k},this.value)">
+        </div></div>`;
+    }).join('')}</div>`;
+  }
   if(alvo){
     return `<div class="sub">${alvo.map((k, n) => {
       const L = LOJAS[k], lj = (r.lojas||{})[k] || {ok:false, div:''};
@@ -1202,8 +1483,12 @@ function blocoSub(dt, i, r){
         <span class="idx">${n + 1}</span>
         <div class="subcheck">${lj.ok ? '✓' : ''}</div>
         <div class="nome">${L[0]}<span class="cidade">${L[1]}</span></div>
-        <input class="div${lj.div ? ' tem' : ''}" data-div="${dt}:${i.id}:${k}" placeholder="${i.campoLoja || 'divergência'}"
-          value="${esc(lj.div)}" oninput="gravaDiv('${dt}','${i.id}',${k},this.value)" onclick="event.stopPropagation()"></div>`;
+        <div class="campos" onclick="event.stopPropagation()">
+          <input class="div${lj.div ? ' tem' : ''}" data-div="${dt}:${i.id}:${k}" placeholder="${i.campoLoja || 'divergência'}"
+            value="${esc(lj.div)}" oninput="gravaDiv('${dt}','${i.id}',${k},this.value)">
+          ${i.campoLoja2 ? `<input class="div larga${lj.obs ? ' tem' : ''}" data-obs="${dt}:${i.id}:${k}" placeholder="${i.campoLoja2}"
+            value="${esc(lj.obs || '')}" oninput="gravaObsLoja('${dt}','${i.id}',${k},this.value)">` : ''}
+        </div></div>`;
     }).join('')}</div>`;
   }
   if(i.sub){
@@ -1219,7 +1504,8 @@ function blocoSub(dt, i, r){
 }
 
 function linhaItem(i){
-  const r = dia(HOJE)[i.id] || {};
+  const DT = ancora(i, hoje);
+  const r = dia(DT)[i.id] || {};
   const nota = notaAjuste(i, hoje);
   const cls = r.st === 'ok' ? ' feito' : r.st === 'na' ? ' naa' : '';
   const mk = r.st === 'ok' ? '✓' : r.st === 'na' ? '–' : '';
@@ -1228,18 +1514,18 @@ function linhaItem(i){
   const alvo = i.lojas ? listaLojas(i) : null;
   const temSub = !!(alvo || i.sub) && r.st !== 'na';
   let feitos = 0, total = 0;
-  if(alvo){ total = alvo.length; feitos = alvo.filter(k => ((r.lojas||{})[k]||{}).ok).length; }
+  if(alvo){ total = alvo.length; feitos = alvo.filter(k => { const x = (r.lojas||{})[k] || {}; return i.marcas ? !!x.rec : !!x.ok; }).length; }
   else if(i.sub){ total = i.sub.length; feitos = i.sub.filter((_,k) => (r.sub||{})[k]).length; }
   const aberto = temSub && r.exp;
 
-  const sub = aberto ? blocoSub(HOJE, i, r) : '';
+  const sub = aberto ? blocoSub(DT, i, r) : '';
 
   const progresso = temSub ? `
     <span class="prog${feitos === total ? ' cheio' : feitos ? ' meio' : ''}">${feitos}/${total}</span>` : '';
   const barra = temSub ? `<div class="barrinha"><i style="width:${total ? feitos/total*100 : 0}%"></i></div>` : '';
 
   return `<div class="item${cls}${aberto ? ' aberto' : ''}">
-    <div class="linha" onclick="${temSub ? `alternaExp('${HOJE}','${i.id}')` : `alterna('${i.id}')`}">
+    <div class="linha" onclick="${temSub ? `alternaExp('${DT}','${i.id}')` : `alterna('${i.id}')`}">
       <div class="marca-box" ${temSub ? `onclick="alterna('${i.id}');event.stopPropagation()"` : ''}>${mk}</div>
       <div class="txt">
         <div class="t">${i.t}${progresso}${i.selo ? `<span class="selo">${i.selo}</span>` : ''}${i.prazo ? `<span class="selo prazo">${i.prazo}</span>` : ''}${nota ? `<span class="selo desloc">${nota}</span>` : ''}</div>
@@ -1255,7 +1541,7 @@ function linhaItem(i){
     ${sub}
     ${r.aberto ? `<div class="painel"><div class="dica">${i.obs || 'Observação'}</div>
       <textarea placeholder="O que aconteceu, o que ficou pendente…"
-        oninput="gravaObs('${HOJE}','${i.id}',this.value)">${esc(r.obs || '')}</textarea></div>` : ''}
+        oninput="gravaObs('${DT}','${i.id}',this.value)">${esc(r.obs || '')}</textarea></div>` : ''}
   </div>`;
 }
 function listaHoje(){
@@ -1287,12 +1573,34 @@ function blocoExtras(){
   </div>`;
 }
 
+function linhaCont(i){
+  const r = regCont(i.id), feito = r.st === 'ok';
+  const temObs = !!(r.obs && r.obs.trim());
+  return `<div class="item${feito ? ' feito' : ''}">
+    <div class="linha" onclick="${feito ? `pedeCont('${i.id}')` : `concluiCont('${i.id}')`}">
+      <div class="marca-box">${feito ? '✓' : ''}</div>
+      <div class="txt">
+        <div class="t">${i.t}${feito ? '<span class="selo ok">concluída</span>' : ''}</div>
+        ${i.d ? `<div class="d">${i.d}</div>` : ''}
+        ${feito && r.em ? `<div class="d">Concluída em ${bdl(new Date(r.em))}</div>` : ''}
+        ${temObs && !r.aberto ? `<div class="obsCont">${esc(r.obs.trim())}</div>` : ''}
+      </div>
+      <div class="acoes">
+        <button class="mini${r.aberto ? ' on' : ''}" onclick="abreObsCont('${i.id}',event)">Obs</button>
+      </div>
+    </div>
+    ${r.aberto ? `<div class="painel"><div class="dica">Observação</div>
+      <textarea placeholder="O que foi feito, o que ficou pendente"
+        oninput="gravaObsCont('${i.id}',this.value)">${esc(r.obs || '')}</textarea></div>` : ''}
+  </div>`;
+}
+
 function listaCont(){
   const itens = contInuas(pessoa);
   if(!itens.length) return '<p class="vazio">Nenhum controle contínuo nesta lista.<br>Todas as rotinas têm data definida.</p>';
   return `<div class="grupo"><h3>Estruturação e controles</h3>
-    <p style="color:var(--musgo);font-size:13.5px;margin:-2px 0 11px">Não entram na contagem do dia. Marque conforme forem sendo feitas.</p>
-    ${itens.map(linhaItem).join('')}</div>`;
+    <p style="color:var(--musgo);font-size:13.5px;margin:-2px 0 11px">Não entram na contagem do dia e não zeram de um dia para o outro. Uma vez concluída, a tarefa fica marcada com a data; toque nela para ver o registro ou reabrir.</p>
+    ${itens.map(linhaCont).join('')}</div>`;
 }
 
 /* ============================================================
@@ -1305,7 +1613,7 @@ function capa(){
     <h2>Checklist do dia</h2>
     <p>${bdl(hoje)} · ${DIAS[hoje.getDay()]}</p>
     ${Object.entries(ROTINAS).map(([k,v]) => {
-      const n = ROTINAS[k].itens.filter(i => i.quando !== 'cont' && venceEm(i, hoje)).length;
+      const n = ROTINAS[k].itens.filter(i => i.quando !== 'cont' && venceEm(i, hoje, k)).length;
       return `<button class="escolha" onclick="escolhe('${k}')">
         <strong>${v.nome}</strong><span>${v.area}</span>
         <em>${n} ${n === 1 ? 'tarefa hoje' : 'tarefas hoje'}</em></button>`;
