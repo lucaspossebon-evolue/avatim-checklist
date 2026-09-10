@@ -479,8 +479,8 @@ const ROTINAS = {
     nome:'Katiara', area:'Operação de lojas e suprimentos',
     itens:[
       {id:'k1', t:'Acompanhar pedidos das lojas e realizar a entrada no sistema', quando:'diario', opc:true},
-      {id:'k2', t:'Resolver demandas das lojas', quando:'diario'},
-      {id:'k3', t:'Retorno das solicitações dos grupos de WhatsApp', quando:'diario'},
+      {id:'k2', t:'Resolver demandas das lojas', quando:'diario', opc:true},
+      {id:'k3', t:'Retorno das solicitações dos grupos de WhatsApp', quando:'diario', opc:true},
       {id:'k4', t:'Acompanhar campanhas, início e fim', d:'Paula manda a ideia, você formaliza', quando:'diario', opc:true},
       {id:'k6', t:'Enviar mensagem nos grupos de informações, ciclos e comunicados', quando:'diario', opc:true},
       {id:'k7', t:'Conferir malote Linhares', d:'40 minutos', quando:'seg', adiaFeriado:true},
@@ -672,7 +672,7 @@ function dataDoMes(q, ref){
    ============================================================ */
 const HOJE = kd(hoje);
 const SENHA = 'avatim2025';
-const VERSAO = '2.8';
+const VERSAO = '2.9';
 let pessoa = null, aba = 'hoje', cache = {};
 let refSemana = segundaDa(hoje), refMes = new Date(hoje);
 
